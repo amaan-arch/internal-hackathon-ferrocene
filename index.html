@@ -1,0 +1,2979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Synapse — Mindful Academic Planner</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- Google Fonts: Plus Jakarta Sans & Playfair for refined aesthetic -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400;1,6..72,500&display=swap" rel="stylesheet">
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          serif: ['"Newsreader"', 'serif'],
+        },
+        colors: {
+          warm: {
+            50: '#FDFBF7',
+            100: '#F7F4EC',
+            200: '#EFE9DC',
+            300: '#E2D9C5',
+            400: '#C7B99D',
+            800: '#3D382E',
+            900: '#26231D',
+          },
+          sage: {
+            50: '#F4F7F4',
+            100: '#E5EBE5',
+            200: '#CBD7CC',
+            300: '#ABC0AD',
+            400: '#8AA68E',
+            500: '#688C6D',
+            600: '#527056',
+            700: '#3F5643',
+            800: '#2E3E31',
+            900: '#1F2A21',
+          },
+          terracotta: {
+            400: '#E07A5F',
+            500: '#D06043',
+          },
+          sand: '#FAF8F5',
+        },
+        boxShadow: {
+          'soft': '0 4px 20px -2px rgba(63, 86, 67, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.02)',
+          'card': '0 10px 30px -4px rgba(46, 62, 49, 0.06), 0 4px 10px -2px rgba(46, 62, 49, 0.03)',
+          'float': '0 20px 40px -10px rgba(46, 62, 49, 0.12)',
+        }
+      }
+    }
+  }
+</script>
+
+<style>
+  body {
+    background-color: #F7F4EC;
+    color: #2D372E;
+    background-image: 
+      radial-gradient(circle at 15% 15%, rgba(138, 166, 142, 0.12) 0%, transparent 40%),
+      radial-gradient(circle at 85% 85%, rgba(226, 217, 197, 0.25) 0%, transparent 45%);
+    background-attachment: fixed;
+  }
+
+  /* Custom Smooth Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #CBD7CC; border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb:hover { background: #ABC0AD; }
+
+  /* Animated Transitions */
+  .fade-in {
+    animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .nav-active {
+    background-color: #527056 !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 8px 18px -4px rgba(82, 112, 86, 0.4);
+  }
+  .nav-active i {
+    color: #FFFFFF !important;
+  }
+
+  .gentle-pulse {
+    animation: gentlePulse 2.5s infinite ease-in-out;
+  }
+  @keyframes gentlePulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.02); opacity: 0.92; }
+  }
+
+  .ring-progress {
+    transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Form cleanups */
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    opacity: 0.6;
+    cursor: pointer;
+  }
+
+  /* Chronotype selector */
+  .chrono-btn {
+    background: #F7F4EC;
+    border-color: #E2D9C5;
+    color: rgba(61, 56, 46, 0.7);
+  }
+  .chrono-btn:hover { background: #EFE9DC; }
+  .chrono-btn.is-active {
+    background: #527056;
+    border-color: #527056;
+    color: #FFFFFF;
+    box-shadow: 0 8px 18px -4px rgba(82, 112, 86, 0.35);
+  }
+
+  /* Focus heatmap grid */
+  .heatmap-grid {
+    display: grid;
+    grid-template-columns: 40px repeat(18, minmax(16px, 1fr));
+    gap: 3px;
+    min-width: 620px;
+  }
+  .heatmap-cell {
+    aspect-ratio: 1 / 1;
+    border-radius: 3px;
+    transition: transform 0.1s ease;
+  }
+  .heatmap-cell:hover { transform: scale(1.25); }
+  .heatmap-label {
+    font-size: 10px;
+    color: rgba(61, 56, 46, 0.5);
+    display: flex;
+    align-items: center;
+  }
+  .heatmap-hour-label {
+    font-size: 9px;
+    color: rgba(61, 56, 46, 0.4);
+    text-align: center;
+  }
+  .heatmap-cell.is-peak { box-shadow: 0 0 0 1.5px #D06043 inset; }
+  .heatmap-cell.is-dip { box-shadow: 0 0 0 1.5px #C7B99D inset; }
+</style>
+</head>
+<body class="min-h-screen flex text-slate-800 antialiased overflow-x-hidden selection:bg-sage-200 selection:text-sage-900">
+
+<!-- ============================================================
+     MINDFUL SIDEBAR NAVIGATION
+============================================================ -->
+<aside class="w-72 bg-warm-50/90 border-r border-warm-300/60 backdrop-blur-xl flex flex-col justify-between p-5 shrink-0 min-h-screen sticky top-0 z-30 transition-all duration-300">
+  <div class="space-y-7">
+    
+    <!-- Brand -->
+    <div class="flex items-center gap-3 px-2 pt-2">
+      <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-sage-600 to-sage-400 flex items-center justify-center shadow-lg shadow-sage-700/20 text-white">
+        <i data-lucide="compass" class="w-6 h-6 stroke-[2.2]"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-1.5">
+          <span class="font-bold text-xl tracking-tight text-sage-900">Synapse</span>
+          <span class="text-[10px] font-semibold tracking-wider uppercase px-1.5 py-0.5 rounded bg-sage-100 text-sage-700 border border-sage-200">SIH '26</span>
+        </div>
+        <p class="text-xs text-warm-800/60 font-serif italic">Academic Planner & Focus</p>
+      </div>
+    </div>
+
+    <!-- Quick Hours Allocation Pill -->
+    <div class="bg-warm-100/80 rounded-2xl p-3.5 border border-warm-200/80 shadow-soft">
+      <div class="flex items-center justify-between text-xs text-sage-800 font-medium mb-1.5">
+        <span class="flex items-center gap-1.5"><i data-lucide="clock-3" class="w-3.5 h-3.5 text-sage-600"></i> Daily Study Time</span>
+        <span id="sidebarHoursDisplay" class="font-bold text-sage-700">4.0 hrs</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <input id="availableHoursInput" type="range" min="1" max="14" step="0.5" value="4"
+          class="w-full h-1.5 bg-warm-300/80 rounded-lg appearance-none cursor-pointer accent-sage-600" />
+      </div>
+      <div class="flex justify-between text-[10px] text-warm-800/50 mt-1">
+        <span>1 hr</span>
+        <span>Target for today</span>
+        <span>14 hrs</span>
+      </div>
+    </div>
+
+    <!-- Navigation links -->
+    <nav class="space-y-1.5">
+      <p class="text-[11px] uppercase tracking-wider font-bold text-warm-800/40 px-3 pb-1">Core Modules</p>
+      
+      <button data-tab="dashboard" onclick="switchTab('dashboard')" 
+        class="nav-btn w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-all text-warm-800/70 hover:bg-warm-200/60 hover:text-sage-900">
+        <i data-lucide="layout-grid" class="w-4 h-4 text-sage-600"></i>
+        <span>Dashboard</span>
+      </button>
+
+      <button data-tab="schedule" onclick="switchTab('schedule')" 
+        class="nav-btn w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-all text-warm-800/70 hover:bg-warm-200/60 hover:text-sage-900">
+        <i data-lucide="sparkles" class="w-4 h-4 text-sage-600"></i>
+        <div class="flex items-center justify-between flex-1">
+          <span>AI Time Schedule</span>
+          <span class="w-2 h-2 rounded-full bg-sage-500 animate-pulse"></span>
+        </div>
+      </button>
+
+      <button data-tab="exams" onclick="switchTab('exams')" 
+        class="nav-btn w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-all text-warm-800/70 hover:bg-warm-200/60 hover:text-sage-900">
+        <i data-lucide="graduation-cap" class="w-4 h-4 text-sage-600"></i>
+        <div class="flex items-center justify-between flex-1">
+          <span>Exam Corner</span>
+          <span id="badgeExamsCount" class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-warm-200 text-sage-800">2</span>
+        </div>
+      </button>
+
+      <button data-tab="performance" onclick="switchTab('performance')" 
+        class="nav-btn w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-all text-warm-800/70 hover:bg-warm-200/60 hover:text-sage-900">
+        <i data-lucide="bar-chart-2" class="w-4 h-4 text-sage-600"></i>
+        <span>Performance Tracker</span>
+      </button>
+
+      <button data-tab="focus" onclick="switchTab('focus')" 
+        class="nav-btn w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-all text-warm-800/70 hover:bg-warm-200/60 hover:text-sage-900">
+        <i data-lucide="sun-moon" class="w-4 h-4 text-sage-600"></i>
+        <div class="flex items-center justify-between flex-1">
+          <span>Focus Lab</span>
+          <span class="w-2 h-2 rounded-full bg-terracotta-400 animate-pulse"></span>
+        </div>
+      </button>
+
+      <button data-tab="lab" onclick="switchTab('lab')" 
+        class="nav-btn w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-all text-warm-800/70 hover:bg-warm-200/60 hover:text-sage-900">
+        <i data-lucide="flask-conical" class="w-4 h-4 text-sage-600"></i>
+        <div class="flex items-center justify-between flex-1">
+          <span>Lab Corner</span>
+          <span id="badgeLabsCount" class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-warm-200 text-sage-800">0</span>
+        </div>
+      </button>
+
+      <button data-tab="graph" onclick="switchTab('graph')" 
+        class="nav-btn w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-all text-warm-800/70 hover:bg-warm-200/60 hover:text-sage-900">
+        <i data-lucide="git-fork" class="w-4 h-4 text-sage-600"></i>
+        <span>Knowledge Graph</span>
+      </button>
+
+      <button data-tab="settings" onclick="switchTab('settings')" 
+        class="nav-btn w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-all text-warm-800/70 hover:bg-warm-200/60 hover:text-sage-900">
+        <i data-lucide="sliders" class="w-4 h-4 text-sage-600"></i>
+        <span>Preferences & Settings</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Bottom: Hackathon Quick Showcase Buttons & Status -->
+  <div class="space-y-3 pt-4 border-t border-warm-300/50">
+    <div class="bg-sage-50 rounded-xl p-3 border border-sage-200/80">
+      <div class="flex items-center justify-between text-xs text-sage-900 font-semibold mb-1">
+        <span>Mindful Status</span>
+        <span class="text-sage-600 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Calibrated</span>
+      </div>
+      <p class="text-[11px] text-warm-800/70 leading-relaxed font-serif italic">"Pace yourself; consistent effort outlasts last-minute sprints."</p>
+    </div>
+
+    <div class="grid grid-cols-2 gap-2">
+      <button onclick="loadDemoData()" class="flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 px-2 rounded-xl bg-sage-600 hover:bg-sage-700 text-white transition-all shadow-sm hover:shadow active:scale-95">
+        <i data-lucide="zap" class="w-3.5 h-3.5"></i> Demo Data
+      </button>
+      <button onclick="resetAllData()" class="flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 px-2 rounded-xl bg-warm-200/80 hover:bg-warm-300/80 text-warm-900 transition-all active:scale-95">
+        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-warm-800"></i> Reset
+      </button>
+    </div>
+  </div>
+</aside>
+
+<!-- ============================================================
+     MAIN CONTENT CANVAS
+============================================================ -->
+<main class="flex-1 min-h-screen px-6 lg:px-10 py-8 max-w-7xl">
+
+  <!-- Top bar / Welcome Banner -->
+  <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 mb-8 border-b border-warm-300/40">
+    <div>
+      <h2 id="pageTitle" class="text-2xl font-bold tracking-tight text-sage-900">Today's Academic Space</h2>
+      <p id="pageSubtitle" class="text-sm text-warm-800/70 mt-0.5">Prioritize smartly, eliminate rush, and study mindfully.</p>
+    </div>
+
+    <!-- Live Date & Clock -->
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 px-4 py-2 bg-warm-50 rounded-2xl border border-warm-200/80 shadow-soft">
+        <i data-lucide="calendar" class="w-4 h-4 text-sage-600"></i>
+        <span id="liveDateStr" class="text-xs font-medium text-sage-800">Sunday, Sep 6</span>
+      </div>
+      <div class="flex items-center gap-1.5 px-3.5 py-2 bg-sage-100/80 rounded-2xl border border-sage-200 text-sage-800 font-mono text-xs font-semibold">
+        <span id="liveClock">14:50</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==========================================================
+       TAB 1: DASHBOARD
+  ========================================================== -->
+  <div id="tab-dashboard" class="tab-panel space-y-8">
+    
+    <!-- Top Highlights Strip -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4" id="statStrip"></div>
+
+    <!-- 48-Hour Deadline Pulse Strip -->
+    <div class="bg-warm-50 rounded-3xl p-5 border border-warm-200/80 shadow-soft">
+      <div class="flex items-center justify-between mb-3.5">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-terracotta-400/15 flex items-center justify-center text-terracotta-500">
+            <i data-lucide="bell" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-sage-900">Upcoming Deadlines (Next 48 Hours)</h3>
+            <p class="text-xs text-warm-800/60">Real-time alerts preventing last-minute stress</p>
+          </div>
+        </div>
+        <span class="text-[11px] font-semibold text-terracotta-500 bg-terracotta-400/10 px-2.5 py-1 rounded-full border border-terracotta-400/20">Auto-Refreshes</span>
+      </div>
+      <div id="ticker" class="flex gap-3 overflow-x-auto pb-2 pt-1"></div>
+    </div>
+
+    <!-- Main Working Grid: Task Form + Tasks List -->
+    <div class="grid lg:grid-cols-12 gap-7">
+      
+      <!-- New Task Card -->
+      <div class="lg:col-span-5 bg-warm-50 rounded-3xl p-6 border border-warm-200/80 shadow-soft h-fit">
+        <div class="flex items-center gap-2.5 mb-5 pb-3 border-b border-warm-200">
+          <div class="w-7 h-7 rounded-lg bg-sage-500 text-white flex items-center justify-center">
+            <i data-lucide="plus" class="w-4 h-4 stroke-[2.5]"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-sage-900">Add Academic Task</h3>
+            <p class="text-xs text-warm-800/60">Input coursework with estimated effort</p>
+          </div>
+        </div>
+
+        <form id="taskForm" class="space-y-4" onsubmit="return addTask(event)">
+          <div>
+            <label class="block text-xs font-semibold text-warm-800/80 mb-1">Task Title</label>
+            <input required id="taskName" type="text" placeholder="e.g., Data Structures Problem Set 4" 
+              class="w-full bg-warm-100/60 border border-warm-300/80 focus:border-sage-500 focus:bg-white focus:ring-2 focus:ring-sage-200 outline-none rounded-xl px-3.5 py-2.5 text-sm transition" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-warm-800/80 mb-1">Category</label>
+              <select id="taskCategory" class="w-full bg-warm-100/60 border border-warm-300/80 focus:border-sage-500 focus:bg-white outline-none rounded-xl px-3 py-2.5 text-xs sm:text-sm transition">
+                <option value="Assignment">Assignment</option>
+                <option value="Lab">Lab Experiment</option>
+                <option value="Quiz">Quiz Preparation</option>
+                <option value="Reading">Textbook Reading</option>
+                <option value="Project">Term Project</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-warm-800/80 mb-1">Priority</label>
+              <select id="taskPriority" class="w-full bg-warm-100/60 border border-warm-300/80 focus:border-sage-500 focus:bg-white outline-none rounded-xl px-3 py-2.5 text-xs sm:text-sm transition font-medium">
+                <option value="High" class="text-terracotta-500 font-bold">🔴 High Priority</option>
+                <option value="Medium" selected class="text-amber-700">🟡 Medium Priority</option>
+                <option value="Low" class="text-sage-700">🟢 Low Priority</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-warm-800/80 mb-1">Estimated Effort</label>
+              <div class="relative">
+                <input required id="taskEffort" type="number" min="0.25" max="24" step="0.25" placeholder="2.5" 
+                  class="w-full bg-warm-100/60 border border-warm-300/80 focus:border-sage-500 focus:bg-white outline-none rounded-xl px-3.5 py-2.5 text-sm transition pr-10" />
+                <span class="absolute right-3 top-2.5 text-xs text-warm-800/50">hrs</span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-warm-800/80 mb-1">Deadline Date & Time</label>
+              <input required id="taskDeadline" type="datetime-local" 
+                class="w-full bg-warm-100/60 border border-warm-300/80 focus:border-sage-500 focus:bg-white outline-none rounded-xl px-2.5 py-2 text-xs transition" />
+            </div>
+          </div>
+
+          <button type="submit" class="w-full mt-2 bg-sage-600 hover:bg-sage-700 text-white font-semibold text-sm py-3 rounded-xl transition-all shadow-md shadow-sage-700/15 flex items-center justify-center gap-2 hover:translate-y-[-1px] active:translate-y-[1px]">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i> Add to Academic Queue
+          </button>
+        </form>
+      </div>
+
+      <!-- Task List Container -->
+      <div class="lg:col-span-7 bg-warm-50 rounded-3xl p-6 border border-warm-200/80 shadow-soft flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between flex-wrap gap-3 mb-5 pb-3 border-b border-warm-200">
+            <div>
+              <h3 class="text-sm font-bold text-sage-900">Task Management Desk</h3>
+              <p class="text-xs text-warm-800/60">Track, reschedule, and verify completion</p>
+            </div>
+            
+            <!-- Filters -->
+            <div class="flex items-center gap-1 bg-warm-100 p-1 rounded-xl border border-warm-200/60 text-xs">
+              <button data-filter="all" onclick="setFilter('all')" class="filter-btn px-3 py-1.5 rounded-lg font-medium transition bg-white shadow-xs text-sage-900">All</button>
+              <button data-filter="urgent" onclick="setFilter('urgent')" class="filter-btn px-3 py-1.5 rounded-lg font-medium transition text-warm-800/70 hover:text-sage-900">Urgent (<24h)</button>
+              <button data-filter="completed" onclick="setFilter('completed')" class="filter-btn px-3 py-1.5 rounded-lg font-medium transition text-warm-800/70 hover:text-sage-900">Completed</button>
+            </div>
+          </div>
+
+          <!-- The List -->
+          <div id="taskList" class="space-y-3 max-h-[500px] overflow-y-auto pr-1"></div>
+        </div>
+
+        <div class="pt-4 mt-3 border-t border-warm-200/60 flex items-center justify-between text-xs text-warm-800/60">
+          <span class="flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5 text-sage-600"></i> Click "Missed" to auto-reschedule +24h without penalty</span>
+          <span id="taskCounterFooter" class="font-medium text-sage-800">5 pending tasks</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==========================================================
+       TAB 2: AI TIME MANAGEMENT & SCHEDULE
+  ========================================================== -->
+  <div id="tab-schedule" class="tab-panel space-y-8 hidden">
+    
+    <!-- Smart Conflict & Burnout Warning Banner (shown dynamically) -->
+    <div id="overloadBanner" class="hidden"></div>
+    <!-- Cognitive Load Balancer Status Banner (shown dynamically) -->
+    <div id="cogLoadBanner" class="hidden"></div>
+
+    <div class="grid lg:grid-cols-12 gap-7">
+      
+      <!-- Time Block Timeline -->
+      <div class="lg:col-span-7 bg-warm-50 rounded-3xl p-6 border border-warm-200/80 shadow-soft">
+        <div class="flex items-center justify-between mb-5 pb-3 border-b border-warm-200">
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-base font-bold text-sage-900">Smart Hourly Study Sequence</h3>
+              <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-sage-100 text-sage-700 border border-sage-200">Weighted AI Algorithm</span>
+            </div>
+            <p id="scheduleSubtitle" class="text-xs text-warm-800/60 mt-0.5">Prioritizes high-weight + imminent deadlines into your available hours.</p>
+          </div>
+          <button onclick="renderSchedule()" class="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-warm-100 hover:bg-warm-200 text-sage-800 transition">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Recalculate
+          </button>
+        </div>
+
+        <!-- Schedule Items -->
+        <div id="scheduleBlocks" class="space-y-3 max-h-[550px] overflow-y-auto pr-1"></div>
+      </div>
+
+      <!-- Mindful Focus Corner: Pomodoro & Audio Chimes -->
+      <div class="lg:col-span-5 space-y-6">
+        
+        <!-- Timer Card -->
+        <div class="bg-warm-50 rounded-3xl p-6 border border-warm-200/80 shadow-soft flex flex-col items-center text-center relative overflow-hidden">
+          <div class="w-full flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2 text-xs font-bold text-sage-900 uppercase tracking-wider">
+              <i data-lucide="flame" class="w-4 h-4 text-terracotta-400"></i> Mindful Focus
+            </div>
+            <span id="timerModeBadge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-sage-100 text-sage-700 border border-sage-200">Study Interval</span>
+          </div>
+
+          <!-- Radial Progress Ring -->
+          <div class="relative w-48 h-48 my-3">
+            <svg viewBox="0 0 120 120" class="w-full h-full -rotate-90">
+              <circle cx="60" cy="60" r="50" stroke="#EFE9DC" stroke-width="7" fill="none"/>
+              <circle id="timerRing" class="ring-progress" cx="60" cy="60" r="50" stroke="#527056" stroke-width="7" fill="none" stroke-linecap="round" stroke-dasharray="314.15" stroke-dashoffset="0"/>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <span id="timerDisplay" class="text-4xl font-extrabold text-sage-900 tracking-tight font-mono">25:00</span>
+              <span id="timerMode" class="text-[11px] font-semibold text-warm-800/60 uppercase tracking-wider mt-1">25 min focus</span>
+            </div>
+          </div>
+
+          <!-- Controls -->
+          <div class="flex items-center gap-2.5 mb-4">
+            <button onclick="startTimer()" class="text-xs font-semibold px-4 py-2.5 rounded-xl bg-sage-600 hover:bg-sage-700 text-white flex items-center gap-1.5 shadow-sm transition active:scale-95">
+              <i data-lucide="play" class="w-3.5 h-3.5"></i> Start
+            </button>
+            <button onclick="pauseTimer()" class="text-xs font-semibold px-4 py-2.5 rounded-xl bg-warm-200 hover:bg-warm-300 text-warm-900 flex items-center gap-1.5 transition active:scale-95">
+              <i data-lucide="pause" class="w-3.5 h-3.5"></i> Pause
+            </button>
+            <button onclick="resetTimer()" class="text-xs font-semibold px-3 py-2.5 rounded-xl bg-warm-100 hover:bg-warm-200 text-warm-800 flex items-center gap-1.5 transition active:scale-95">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+
+          <!-- Custom Focus/Break Duration -->
+          <div class="w-full grid grid-cols-2 gap-2 mb-4">
+            <div class="bg-warm-100/70 rounded-xl px-3 py-2 border border-warm-200 text-left">
+              <label class="block text-[10px] font-bold text-warm-800/60 uppercase tracking-wider mb-1">Focus (min)</label>
+              <input id="focusMinInput" type="number" min="5" max="120" step="5" value="25"
+                onchange="updateTimerPrefs()"
+                class="w-full bg-white border border-warm-300/80 focus:border-sage-500 outline-none rounded-lg px-2 py-1 text-sm font-bold text-sage-900" />
+            </div>
+            <div class="bg-warm-100/70 rounded-xl px-3 py-2 border border-warm-200 text-left">
+              <label class="block text-[10px] font-bold text-warm-800/60 uppercase tracking-wider mb-1">Break (min)</label>
+              <input id="breakMinInput" type="number" min="1" max="30" step="1" value="5"
+                onchange="updateTimerPrefs()"
+                class="w-full bg-white border border-warm-300/80 focus:border-sage-500 outline-none rounded-lg px-2 py-1 text-sm font-bold text-sage-900" />
+            </div>
+          </div>
+
+          <!-- Ambient Sound Generator Toggle -->
+          <button onclick="toggleAmbient()" id="ambientBtn" class="w-full text-xs font-medium py-3 px-4 rounded-2xl bg-warm-100 hover:bg-warm-200 border border-warm-200 text-sage-900 flex items-center justify-center gap-2 transition">
+            <i data-lucide="volume-2" class="w-4 h-4 text-sage-600"></i> Mindful Brown Noise: <span class="font-bold text-warm-800/60">Off</span>
+          </button>
+        </div>
+
+        <!-- Academic Wisdom / Zen Quote -->
+        <div class="bg-sage-100/60 rounded-3xl p-5 border border-sage-200/80">
+          <div class="flex items-start gap-3">
+            <i data-lucide="quote" class="w-5 h-5 text-sage-600 shrink-0 mt-0.5"></i>
+            <div>
+              <p id="quoteText" class="text-xs text-sage-900 font-serif italic leading-relaxed">
+                "It is not that we have a short time to live, but that we waste a lot of it. Focused study honors your future self."
+              </p>
+              <div class="flex items-center justify-between mt-3 pt-2 border-t border-sage-200/60">
+                <span class="text-[10px] uppercase font-bold text-sage-700/60 tracking-wider">Mindful Thought</span>
+                <button onclick="newQuote()" class="text-xs font-semibold text-sage-700 hover:text-sage-900 flex items-center gap-1">
+                  <i data-lucide="sparkle" class="w-3 h-3"></i> Refresh
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==========================================================
+       TAB 3: EXAM CORNER
+  ========================================================== -->
+  <div id="tab-exams" class="tab-panel space-y-8 hidden">
+    
+    <div class="grid lg:grid-cols-12 gap-7">
+      
+      <!-- Exam Registration Form -->
+      <div class="lg:col-span-5 bg-warm-50 rounded-3xl p-6 border border-warm-200/80 shadow-soft h-fit">
+        <div class="flex items-center gap-2.5 mb-5 pb-3 border-b border-warm-200">
+          <div class="w-7 h-7 rounded-lg bg-sage-600 text-white flex items-center justify-center">
+            <i data-lucide="book-marked" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-sage-900">Schedule Examination</h3>
+            <p class="text-xs text-warm-800/60">Set date, target score & syllabus checklist</p>
+          </div>
+        </div>
+
+        <form id="examForm" class="space-y-4" onsubmit="return addExam(event)">
+          <div>
+            <label class="block text-xs font-semibold text-warm-800/80 mb-1">Subject / Course Name</label>
+            <input required id="examSubject" type="text" placeholder="e.g., Engineering Mathematics II" 
+              class="w-full bg-warm-100/60 border border-warm-300/80 focus:border-sage-500 focus:bg-white outline-none rounded-xl px-3.5 py-2.5 text-sm transition" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-warm-800/80 mb-1">Exam Date</label>
+              <input required id="examDate" type="date" 
+                class="w-full bg-warm-100/60 border border-warm-300/80 focus:border-sage-500 focus:bg-white outline-none rounded-xl px-3 py-2 text-xs sm:text-sm transition" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-warm-800/80 mb-1">Target Score (%)</label>
+              <input required id="examTarget" type="number" min="1" max="100" placeholder="85" 
+                class="w-full bg-warm-100/60 border border-warm-300/80 focus:border-sage-500 focus:bg-white outline-none rounded-xl px-3.5 py-2.5 text-sm transition" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-warm-800/80 mb-1">Syllabus Breakdown (Comma separated topics)</label>
+            <textarea id="examTopics" rows="3" placeholder="Linear Differential Equations, Laplace Transforms, Fourier Series, Vector Calculus" 
+              class="w-full bg-warm-100/60 border border-warm-300/80 focus:border-sage-500 focus:bg-white outline-none rounded-xl px-3.5 py-2 text-xs sm:text-sm transition"></textarea>
+            <span class="text-[11px] text-warm-800/50 mt-1 block">Creates clickable progress checkboxes to track topic mastery.</span>
+          </div>
+
+          <button type="submit" class="w-full bg-sage-600 hover:bg-sage-700 text-white font-semibold text-sm py-3 rounded-xl transition shadow-md shadow-sage-700/15 flex items-center justify-center gap-2">
+            <i data-lucide="plus" class="w-4 h-4"></i> Save Exam & Syllabus
+          </button>
+        </form>
+      </div>
+
+      <!-- Upcoming Exams & Marks Tracker -->
+      <div class="lg:col-span-7 space-y-7">
+        
+        <!-- Active Exam Cards -->
+        <div class="bg-warm-50 rounded-3xl p-6 border border-warm-200/80 shadow-soft">
+          <div class="flex items-center justify-between mb-4 pb-3 border-b border-warm-200">
+            <div>
+              <h3 class="text-sm font-bold text-sage-900">Registered Examinations</h3>
+              <p class="text-xs text-warm-800/60">Shows 7-day proximity warnings and syllabus coverage</p>
+            </div>
+            <span class="text-xs font-medium text-sage-700 bg-sage-100 px-2.5 py-1 rounded-full border border-sage-200">7-Day Alert Active</span>
+          </div>
+
+          <div id="examList" class="space-y-4 max-h-[400px] overflow-y-auto pr-1"></div>
+        </div>
+
+        <!-- Exam Marks & Performance Record Table -->
+        <div class="bg-warm-50 rounded-3xl p-6 border border-warm-200/80 shadow-soft">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-sm font-bold text-sage-900">Marks & Grade Tracker</h3>
+              <p class="text-xs text-warm-800/60">Compare your ambition against actual performance</p>
+            </div>
+            <i data-lucide="award" class="w-4 h-4 text-amber-600"></i>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="border-b border-warm-200 text-warm-800/50 uppercase tracking-wider font-bold">
+                  <th class="py-2.5 pr-3">Subject</th>
+                  <th class="py-2.5 pr-3">Date</th>
+                  <th class="py-2.5 pr-3">Target</th>
+                  <th class="py-2.5 pr-3">Achieved</th>
+                  <th class="py-2.5">Evaluation</th>
+                </tr>
+              </thead>
+              <tbody id="marksTableBody" class="divide-y divide-warm-200/60 font-medium"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==========================================================
+       TAB 4: PERFORMANCE TRACKER
+  ========================================================== -->
+  <div id="tab-performance" class="tab-panel space-y-8 hidden">
+    
+    <!-- Top Row: Chart + Stats -->
+    <div class="grid lg:grid-cols-12 gap-7">
+      
+      <!-- Discrepancy Chart -->
+      <div class="lg:col-span-8 bg-warm-50 rounded-3xl p-6 border border-warm-200/80 shadow-soft">
+        <div class="flex items-center justify-between mb-4 pb-2 border-b border-warm-200">
+          <div>
+            <h3 class="text-base font-bold text-sage-900">Estimated vs. Actual Time Discrepancy</h3>
+            <p class="text-xs text-warm-800/60">Identifies coursework categories where time leaks occur</p>
+          </div>
+          <span class="text-xs font-semibold px-2.5 py-1 rounded-xl bg-warm-100 text-sage-800">Hours by Category</span>
+        </div>
+        
+        <div class="h-64">
+          <canvas id="perfChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Quick KPI Counters -->
+      <div class="lg:col-span-4 space-y-4 flex flex-col justify-between">
+        
+        <div class="bg-warm-50 rounded-3xl p-5 border border-warm-200/80 shadow-soft">
+          <div class="flex items-center justify-between text-warm-800/60 mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider">Completion Accuracy</span>
+            <i data-lucide="check-circle" class="w-4 h-4 text-sage-600"></i>
+          </div>
+          <p id="completionRateStat" class="text-3xl font-extrabold text-sage-900">0%</p>
+          <p id="completionRateSub" class="text-xs text-warm-800/60 mt-1">0 of 0 tasks completed</p>
+        </div>
+
+        <div class="bg-warm-50 rounded-3xl p-5 border border-warm-200/80 shadow-soft">
+          <div class="flex items-center justify-between text-warm-800/60 mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider">Weekly Time Invested</span>
+            <i data-lucide="trending-up" class="w-4 h-4 text-sage-600"></i>
+          </div>
+          <p id="weeklyStat" class="text-3xl font-extrabold text-sage-900">0.0 hrs</p>
+          <p class="text-xs text-warm-800/60 mt-1">logged across completed tasks</p>
+        </div>
+
+        <div class="bg-sage-600 text-white rounded-3xl p-5 shadow-soft">
+          <div class="flex items-center gap-2 mb-1">
+            <i data-lucide="shield-check" class="w-4 h-4 text-sage-200"></i>
+            <span class="text-xs font-bold uppercase tracking-wider text-sage-100">Study Calibration</span>
+          </div>
+          <p class="text-xs leading-relaxed text-sage-100/90 font-serif italic mt-1.5">
+            "Students who adjust estimates based on actual logging reduce academic burnout by over 40%."
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- AI Personalized Recommendation & Diagnosis Card -->
+    <div class="bg-warm-50 rounded-3xl p-6 border border-warm-200/80 shadow-soft">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-sage-900">Personalized Estimation Insights & Recommendations</h3>
+          <p class="text-xs text-warm-800/60">Automated feedback derived from your actual vs planned study history</p>
+        </div>
+      </div>
+      <div id="insightCard" class="text-sm text-sage-900 leading-relaxed bg-warm-100/60 p-4 rounded-2xl border border-warm-200"></div>
+    </div>
+
+  </div>
+
+  <!-- ==========================================================
+       TAB 4.5: FOCUS LAB (Chronotype, Heatmap, Breaks, Zen Flora)
+  ========================================================== -->
+  <div id="tab-focus" class="tab-panel space-y-8 hidden">
+
+    <div class="grid lg:grid-cols-12 gap-7">
+
+      <!-- Chronotype Engine -->
+      <div class="lg:col-span-5 bg-warm-50 rounded-3xl p-6 border border-warm-200/80 shadow-soft h-fit">
+        <div class="flex items-center gap-2.5 mb-5 pb-3 border-b border-warm-200">
+          <div class="w-7 h-7 rounded-lg bg-sage-600 text-white flex items-center justify-center">
+            <i data-lucide="sun-moon" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-sage-900">Chronotype & Circadian Rhythm</h3>
+            <p class="text-xs text-warm-800/60">Tell the scheduler when your mind is sharpest</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 mb-4">
+          <button onclick="setChronotype('early')" data-chrono="early" class="chrono-btn text-xs font-semibold py-3 rounded-xl border transition flex flex-col items-center gap-1.5">
+            <i data-lucide="sunrise" class="w-4 h-4"></i> Early Bird
+          </button>
+          <button onclick="setChronotype('night')" data-chrono="night" class="chrono-btn text-xs font-semibold py-3 rounded-xl border transition flex flex-col items-center gap-1.5">
+            <i data-lucide="moon" class="w-4 h-4"></i> Night Owl
+          </button>
+          <button onclick="setChronotype('custom')" data-chrono="custom" class="chrono-btn text-xs font-semibold py-3 rounded-xl border transition flex flex-col items-center gap-1.5">
+            <i data-lucide="sliders" class="w-4 h-4"></i> Custom
+          </button>
+        </div>
+
+        <div id="customPeakRow" class="grid grid-cols-2 gap-3 mb-4 hidden">
+          <div>
+            <label class="block text-xs font-semibold text-warm-800/80 mb-1">Peak starts</label>
+            <input id="customPeakStart" type="time" onchange="updateCustomPeak()" class="w-full bg-warm-100/60 border border-warm-300/80 focus:border-sage-500 outline-none rounded-xl px-3 py-2 text-xs" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-warm-800/80 mb-1">Peak ends</label>
+            <input id="customPeakEnd" type="time" onchange="updateCustomPeak()" class="w-full bg-warm-100/60 border border-warm-300/80 focus:border-sage-500 outline-none rounded-xl px-3 py-2 text-xs" />
+          </div>
+        </div>
+
+        <div class="bg-sage-100/60 rounded-2xl p-4 border border-sage-200/80">
+          <p id="chronoSummary" class="text-xs text-sage-900 leading-relaxed"></p>
+          <p class="text-[11px] text-warm-800/50 mt-2">Deep-work tasks (assignments, labs, projects) get placed in this window on the AI Time Schedule tab. Light tasks (reading) drift toward the 1–3 PM post-lunch dip automatically.</p>
+        </div>
+      </div>
+
+      <!-- Weekly Focus Heatmap -->
+      <div class="lg:col-span-7 bg-warm-50 rounded-3xl p-6 border border-warm-200/80 shadow-soft">
+        <div class="flex items-center justify-between mb-4 pb-3 border-b border-warm-200">
+          <div>
+            <h3 class="text-sm font-bold text-sage-900">Weekly Focus Heatmap</h3>
+            <p class="text-xs text-warm-800/60">Built from your logged Pomodoro sessions & task completions</p>
+          </div>
+          <i data-lucide="grid-3x3" class="w-4 h-4 text-sage-600"></i>
+        </div>
+        <div id="focusHeatmap" class="overflow-x-auto"></div>
+        <div class="flex items-center justify-between mt-3 text-[11px] text-warm-800/50">
+          <span class="flex items-center gap-1.5"><span class="inline-block w-2.5 h-2.5 rounded-sm border border-warm-300" style="background:#EFE9DC;"></span> No sessions logged</span>
+          <span class="flex items-center gap-3">
+            <span class="flex items-center gap-1.5"><span class="inline-block w-2.5 h-2.5 rounded-sm" style="background:#8AA68E;"></span> Some focus</span>
+            <span class="flex items-center gap-1.5"><span class="inline-block w-2.5 h-2.5 rounded-sm" style="background:#2E3E31;"></span> Peak concentration</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid lg:grid-cols-12 gap-7">
+
+      <!-- Break Suggestions -->
+      <div class="lg:col-span-7 bg-warm-50 rounded-3xl p-6 border border-warm-200/80 shadow-soft">
+        <div class="flex items-center justify-between mb-4 pb-3 border-b border-warm-200">
+          <div>
+            <h3 class="text-sm font-bold text-sage-900">Break Suggestions</h3>
+            <p id="breakIntensityLabel" class="text-xs text-warm-800/60">Matched to your current workload intensity</p>
+          </div>
+          <button onclick="renderBreakSuggestions()" class="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-warm-100 hover:bg-warm-200 text-sage-800 transition">
+            <i data-lucide="shuffle" class="w-3.5 h-3.5"></i> Shuffle
+          </button>
+        </div>
+        <div id="breakSuggestions" class="grid sm:grid-cols-3 gap-3"></div>
+      </div>
+
+      <!-- Zen Flora -->
+      <div class="lg:col-span-5 bg-warm-50 rounded-3xl p-6 border border-warm-200/80 shadow-soft flex flex-col">
+        <div class="flex items-center justify-between mb-3 pb-3 border-b border-warm-200">
+          <div>
+            <h3 class="text-sm font-bold text-sage-900">Zen Flora</h3>
+            <p class="text-xs text-warm-800/60">Grows with focus, wilts with overdue work</p>
+          </div>
+          <i data-lucide="sprout" class="w-4 h-4 text-sage-600"></i>
+        </div>
+        <div class="flex-1 flex items-center justify-center bg-gradient-to-b from-warm-100/40 to-sage-100/40 rounded-2xl border border-warm-200/60 py-2">
+          <canvas id="zenCanvas" width="280" height="240"></canvas>
+        </div>
+        <p id="zenCaption" class="text-xs text-center text-warm-800/60 mt-3"></p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==========================================================
+       TAB 6: LAB CORNER
+  ========================================================== -->
+  <div id="tab-lab" class="tab-panel space-y-8 hidden">
+    <div class="grid lg:grid-cols-12 gap-7">
+
+      <!-- Lab Entry Form -->
+      <div class="lg:col-span-5 bg-warm-50 rounded-3xl p-6 border border-warm-200/80 shadow-soft h-fit">
+        <div class="flex items-center gap-2.5 mb-5 pb-3 border-b border-warm-200">
+          <div class="w-7 h-7 rounded-lg bg-sage-600 text-white flex items-center justify-center">
+            <i data-lucide="flask-conical" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-sage-900">Log a Lab</h3>
+            <p class="text-xs text-warm-800/60">Track schedule, progress & assignment deadlines</p>
+          </div>
+        </div>
+
+        <form id="labForm" class="space-y-4" onsubmit="return addLab(event)">
+          <div>
+            <label class="block text-xs font-semibold text-warm-800/80 mb-1">Lab / Course Name</label>
+            <input required id="labName" type="text" placeholder="e.g., Data Structures Lab" 
+              class="w-full bg-warm-100/60 border border-warm-300/80 focus:border-sage-500 focus:bg-white outline-none rounded-xl px-3.5 py-2.5 text-sm transition" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-warm-800/80 mb-1">Session Day</label>
+              <select id="labDay" class="w-full bg-warm-100/60 border border-warm-300/80 focus:border-sage-500 focus:bg-white outline-none rounded-xl px-3 py-2.5 text-xs sm:text-sm transition">
+                <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+                <option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-warm-800/80 mb-1">Session Time</label>
+              <input id="labTime" type="time" value="10:00"
+                class="w-full bg-warm-100/60 border border-warm-300/80 focus:border-sage-500 focus:bg-white outline-none rounded-xl px-3 py-2 text-xs sm:text-sm transition" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-warm-800/80 mb-1">Assignment Deadline</label>
+            <input id="labDeadline" type="datetime-local"
+              class="w-full bg-warm-100/60 border border-warm-300/80 focus:border-sage-500 focus:bg-white outline-none rounded-xl px-2.5 py-2 text-xs transition" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-warm-800/80 mb-1">Current Progress (%)</label>
+            <input id="labProgress" type="range" min="0" max="100" step="5" value="0"
+              oninput="document.getElementById('labProgressVal').textContent = this.value + '%'"
+              class="w-full h-1.5 bg-warm-300/80 rounded-lg appearance-none cursor-pointer accent-sage-600" />
+            <div class="text-right text-xs font-bold text-sage-700 mt-1"><span id="labProgressVal">0%</span></div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-warm-800/80 mb-1">Notes (optional)</label>
+            <textarea id="labNotes" rows="2" placeholder="e.g., Experiment 5 — waiting on lab partner's dataset"
+              class="w-full bg-warm-100/60 border border-warm-300/80 focus:border-sage-500 focus:bg-white outline-none rounded-xl px-3.5 py-2 text-xs sm:text-sm transition"></textarea>
+          </div>
+
+          <button type="submit" class="w-full bg-sage-600 hover:bg-sage-700 text-white font-semibold text-sm py-3 rounded-xl transition shadow-md shadow-sage-700/15 flex items-center justify-center gap-2">
+            <i data-lucide="plus" class="w-4 h-4"></i> Save Lab Entry
+          </button>
+        </form>
+      </div>
+
+      <!-- Lab List -->
+      <div class="lg:col-span-7 bg-warm-50 rounded-3xl p-6 border border-warm-200/80 shadow-soft">
+        <div class="flex items-center justify-between mb-4 pb-3 border-b border-warm-200">
+          <div>
+            <h3 class="text-sm font-bold text-sage-900">Your Lab Schedule & Progress</h3>
+            <p class="text-xs text-warm-800/60">Deadlines within 48 hours are flagged automatically</p>
+          </div>
+          <i data-lucide="clipboard-list" class="w-4 h-4 text-sage-600"></i>
+        </div>
+        <div id="labList" class="space-y-3 max-h-[620px] overflow-y-auto pr-1"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==========================================================
+       TAB 7: KNOWLEDGE GRAPH MAPPING
+  ========================================================== -->
+  <div id="tab-graph" class="tab-panel space-y-8 hidden">
+    <div class="grid lg:grid-cols-12 gap-7">
+
+      <!-- Graph Builder Form -->
+      <div class="lg:col-span-4 space-y-6">
+        <div class="bg-warm-50 rounded-3xl p-6 border border-warm-200/80 shadow-soft">
+          <div class="flex items-center gap-2.5 mb-4 pb-3 border-b border-warm-200">
+            <div class="w-7 h-7 rounded-lg bg-sage-600 text-white flex items-center justify-center">
+              <i data-lucide="circle-dot" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-sage-900">Add Topic</h3>
+              <p class="text-xs text-warm-800/60">A concept or course unit</p>
+            </div>
+          </div>
+          <form class="space-y-3" onsubmit="return addGraphNode(event)">
+            <input required id="graphNodeName" type="text" placeholder="e.g., Calculus" 
+              class="w-full bg-warm-100/60 border border-warm-300/80 focus:border-sage-500 focus:bg-white outline-none rounded-xl px-3.5 py-2.5 text-sm transition" />
+            <select id="graphNodeCourse" class="w-full bg-warm-100/60 border border-warm-300/80 focus:border-sage-500 focus:bg-white outline-none rounded-xl px-3 py-2.5 text-xs sm:text-sm transition">
+              <option value="Mathematics">Mathematics</option>
+              <option value="Physics">Physics</option>
+              <option value="Engineering">Engineering</option>
+              <option value="Computer Science">Computer Science</option>
+              <option value="Chemistry">Chemistry</option>
+              <option value="Other">Other</option>
+            </select>
+            <button type="submit" class="w-full bg-sage-600 hover:bg-sage-700 text-white font-semibold text-sm py-2.5 rounded-xl transition flex items-center justify-center gap-2">
+              <i data-lucide="plus" class="w-4 h-4"></i> Add Topic Node
+            </button>
+          </form>
+        </div>
+
+        <div class="bg-warm-50 rounded-3xl p-6 border border-warm-200/80 shadow-soft">
+          <div class="flex items-center gap-2.5 mb-4 pb-3 border-b border-warm-200">
+            <div class="w-7 h-7 rounded-lg bg-terracotta-400 text-white flex items-center justify-center">
+              <i data-lucide="link-2" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-sage-900">Connect Topics</h3>
+              <p class="text-xs text-warm-800/60">Show how ideas build on each other</p>
+            </div>
+          </div>
+          <form class="space-y-3" onsubmit="return addGraphEdge(event)">
+            <select id="graphEdgeFrom" class="w-full bg-warm-100/60 border border-warm-300/80 focus:border-sage-500 outline-none rounded-xl px-3 py-2.5 text-xs sm:text-sm transition"></select>
+            <div class="text-center text-warm-800/40 text-xs">connects to</div>
+            <select id="graphEdgeTo" class="w-full bg-warm-100/60 border border-warm-300/80 focus:border-sage-500 outline-none rounded-xl px-3 py-2.5 text-xs sm:text-sm transition"></select>
+            <input id="graphEdgeLabel" type="text" placeholder="Relationship (optional), e.g. 'is used in'" 
+              class="w-full bg-warm-100/60 border border-warm-300/80 focus:border-sage-500 outline-none rounded-xl px-3.5 py-2 text-xs transition" />
+            <button type="submit" class="w-full bg-terracotta-500 hover:bg-terracotta-500/90 text-white font-semibold text-sm py-2.5 rounded-xl transition flex items-center justify-center gap-2">
+              <i data-lucide="git-merge" class="w-4 h-4"></i> Link Topics
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Graph Canvas -->
+      <div class="lg:col-span-8 bg-warm-50 rounded-3xl p-6 border border-warm-200/80 shadow-soft">
+        <div class="flex items-center justify-between mb-4 pb-3 border-b border-warm-200">
+          <div>
+            <h3 class="text-sm font-bold text-sage-900">Interconnection Map</h3>
+            <p class="text-xs text-warm-800/60">Click a node to remove it, or a line to remove a connection</p>
+          </div>
+          <span id="graphStats" class="text-[11px] font-semibold text-sage-700 bg-sage-100 px-2.5 py-1 rounded-full border border-sage-200">0 topics • 0 links</span>
+        </div>
+        <div id="graphCanvasWrap" class="w-full overflow-x-auto">
+          <svg id="graphSvg" viewBox="0 0 640 520" class="w-full" style="min-height:420px;"></svg>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==========================================================
+       TAB 5: PREFERENCES & SETTINGS
+  ========================================================== -->
+  <div id="tab-settings" class="tab-panel space-y-6 hidden">
+    <div class="max-w-3xl bg-warm-50 rounded-3xl p-7 border border-warm-200/80 shadow-soft space-y-6">
+      <div>
+        <h3 class="text-base font-bold text-sage-900">Planner Preferences</h3>
+        <p class="text-xs text-warm-800/60">Configure your daily learning environment</p>
+      </div>
+
+      <div class="space-y-4 pt-2">
+        <div class="flex items-center justify-between p-4 bg-warm-100/60 rounded-2xl border border-warm-200">
+          <div>
+            <p class="text-sm font-semibold text-sage-900">Auto Mindful Breaks</p>
+            <p class="text-xs text-warm-800/60">Inserts 10-minute pauses between major study blocks</p>
+          </div>
+          <span class="text-xs font-bold text-sage-700 bg-sage-200/70 px-3 py-1 rounded-full">Always On</span>
+        </div>
+
+        <div class="flex items-center justify-between p-4 bg-warm-100/60 rounded-2xl border border-warm-200">
+          <div>
+            <p class="text-sm font-semibold text-sage-900">Local Browser Storage</p>
+            <p class="text-xs text-warm-800/60">All data stays in your browser with zero cloud dependencies</p>
+          </div>
+          <span class="text-xs font-bold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">Encrypted Local</span>
+        </div>
+
+        <div class="flex items-center justify-between p-4 bg-warm-100/60 rounded-2xl border border-warm-200">
+          <div>
+            <p class="text-sm font-semibold text-sage-900">Exam Proximity Threshold</p>
+            <p class="text-xs text-warm-800/60">Highlight exams in red when closer than</p>
+          </div>
+          <span class="text-xs font-bold text-warm-900">7 Days</span>
+        </div>
+      </div>
+
+      <div class="pt-4 border-t border-warm-200 flex items-center justify-between">
+        <p class="text-xs text-warm-800/60">Smart India Hackathon 2026 — PS 1 Prototype</p>
+        <button onclick="resetAllData()" class="text-xs font-semibold px-4 py-2.5 rounded-xl bg-terracotta-400/10 text-terracotta-500 border border-terracotta-400/30 hover:bg-terracotta-400/20 transition">
+          Wipe Local Storage Data
+        </button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ============================================================
+     MICRO-REWARD MODAL (unlocked on task completion)
+============================================================ -->
+<div id="rewardModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(38,35,29,0.55);">
+  <div class="bg-warm-50 rounded-3xl p-7 max-w-md w-full border border-warm-200 shadow-float fade-in relative">
+    <button onclick="closeRewardModal()" class="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-warm-200 text-warm-800/60">
+      <i data-lucide="x" class="w-4 h-4"></i>
+    </button>
+    <div id="rewardModalBody" class="text-center"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     JAVASCRIPT CORE LOGIC & STATE ENGINE
+============================================================ -->
+<script>
+/* ================= STATE & PERSISTENCE ================= */
+let state = {
+  tasks: [],
+  exams: [],
+  availableHours: 4,
+  chronotype: { type: 'early', peakStart: 6, peakEnd: 11 },
+  focusLog: [],   // [{ day: 0-6, hour: 0-23, type: 'pomodoro'|'task' }]
+  zenSessions: 0, // count of completed 25-min focus sessions
+  labs: [],       // [{ id, name, day, time, deadline, progress, notes }]
+  graph: { nodes: [], edges: [] }, // knowledge graph: { id, name, course } / { id, from, to, label }
+  rewardsUnlocked: 0,
+  timerPrefs: { focusMin: 25, breakMin: 5 }
+};
+
+const CHRONOTYPE_PRESETS = {
+  early:  { peakStart: 6,  peakEnd: 11 },
+  night:  { peakStart: 19, peakEnd: 24 }
+};
+
+function loadState(){
+  try {
+    state.tasks = JSON.parse(localStorage.getItem('synapse_tasks')) || [];
+    state.exams = JSON.parse(localStorage.getItem('synapse_exams')) || [];
+    state.availableHours = parseFloat(localStorage.getItem('synapse_hours')) || 4;
+    state.chronotype = JSON.parse(localStorage.getItem('synapse_chronotype')) || { type: 'early', peakStart: 6, peakEnd: 11 };
+    state.focusLog = JSON.parse(localStorage.getItem('synapse_focuslog')) || [];
+    state.zenSessions = parseInt(localStorage.getItem('synapse_zensessions'), 10) || 0;
+    state.labs = JSON.parse(localStorage.getItem('synapse_labs')) || [];
+    state.graph = JSON.parse(localStorage.getItem('synapse_graph')) || { nodes: [], edges: [] };
+    state.rewardsUnlocked = parseInt(localStorage.getItem('synapse_rewards'), 10) || 0;
+    state.timerPrefs = JSON.parse(localStorage.getItem('synapse_timerprefs')) || { focusMin: 25, breakMin: 5 };
+  } catch(e) {
+    state = { tasks: [], exams: [], availableHours: 4, chronotype: { type: 'early', peakStart: 6, peakEnd: 11 }, focusLog: [], zenSessions: 0, labs: [], graph: { nodes: [], edges: [] }, rewardsUnlocked: 0, timerPrefs: { focusMin: 25, breakMin: 5 } };
+  }
+}
+function saveTasks(){ localStorage.setItem('synapse_tasks', JSON.stringify(state.tasks)); }
+function saveExams(){ localStorage.setItem('synapse_exams', JSON.stringify(state.exams)); }
+function saveHours(){ localStorage.setItem('synapse_hours', String(state.availableHours)); }
+function saveChronotype(){ localStorage.setItem('synapse_chronotype', JSON.stringify(state.chronotype)); }
+function saveFocusLog(){ localStorage.setItem('synapse_focuslog', JSON.stringify(state.focusLog)); }
+function saveZenSessions(){ localStorage.setItem('synapse_zensessions', String(state.zenSessions)); }
+function saveLabs(){ localStorage.setItem('synapse_labs', JSON.stringify(state.labs)); }
+function saveGraph(){ localStorage.setItem('synapse_graph', JSON.stringify(state.graph)); }
+function saveRewards(){ localStorage.setItem('synapse_rewards', String(state.rewardsUnlocked)); }
+function saveTimerPrefs(){ localStorage.setItem('synapse_timerprefs', JSON.stringify(state.timerPrefs)); }
+
+function uid(){ 
+  return 'id_' + Math.random().toString(36).slice(2, 9) + Date.now().toString(36); 
+}
+
+/* ================= TAB NAVIGATION ================= */
+const tabMeta = {
+  dashboard: { title: "Today's Academic Space", subtitle: "Prioritize smartly, eliminate rush, and study mindfully." },
+  schedule: { title: "Intelligent Time-Blocking Sequence", subtitle: "Algorithmic conflict-resolution and workload distribution." },
+  exams: { title: "Examination & Syllabus Corner", subtitle: "Track exam deadlines, coverage percentage, and target grades." },
+  performance: { title: "Academic Performance & Time Discrepancy", subtitle: "Learn from past habits to calibrate future study schedules." },
+  focus: { title: "Focus Lab", subtitle: "Chronotype scheduling, weekly focus heatmap, mindful breaks & your Zen Flora." },
+  lab: { title: "Lab Corner", subtitle: "Track your lab schedule, progress, and assignment deadlines." },
+  graph: { title: "Knowledge Graph Mapping", subtitle: "Visualize how topics interconnect across your courses." },
+  settings: { title: "Workspace & App Settings", subtitle: "Adjust study hours, mindful notifications, and local data." }
+};
+
+function switchTab(tab){
+  document.querySelectorAll('.tab-panel').forEach(el => el.classList.add('hidden'));
+  const activeEl = document.getElementById('tab-' + tab);
+  if(activeEl){
+    activeEl.classList.remove('hidden');
+    activeEl.classList.add('fade-in');
+  }
+
+  // Update nav buttons
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    if(btn.dataset.tab === tab){
+      btn.classList.add('nav-active');
+    } else {
+      btn.classList.remove('nav-active');
+    }
+  });
+
+  // Update Headers
+  if(tabMeta[tab]){
+    document.getElementById('pageTitle').textContent = tabMeta[tab].title;
+    document.getElementById('pageSubtitle').textContent = tabMeta[tab].subtitle;
+  }
+
+  if(tab === 'schedule') renderSchedule();
+  if(tab === 'performance') renderPerformance();
+  if(tab === 'focus') renderFocusLab();
+  if(tab === 'lab') renderLabs();
+  if(tab === 'graph') renderKnowledgeGraph();
+  lucide.createIcons();
+}
+
+/* ================= HELPERS ================= */
+function fmtDateTime(iso){
+  const d = new Date(iso);
+  return d.toLocaleString(undefined, { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+function fmtDate(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
+}
+function hoursUntil(iso){
+  return (new Date(iso) - new Date()) / 3600000;
+}
+function humanCountdown(iso){
+  const h = hoursUntil(iso);
+  if(h <= 0) return 'Overdue';
+  if(h < 1) return Math.round(h * 60) + 'm left';
+  if(h < 24) return Math.floor(h) + 'h ' + Math.round((h % 1) * 60) + 'm left';
+  const days = Math.floor(h / 24);
+  return days + 'd ' + Math.floor(h % 24) + 'h left';
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+const priorityBadges = {
+  High: 'bg-terracotta-400/15 text-terracotta-500 border-terracotta-400/30',
+  Medium: 'bg-amber-100 text-amber-800 border-amber-300',
+  Low: 'bg-sage-100 text-sage-800 border-sage-200'
+};
+
+const categoryIcons = {
+  Assignment: 'file-text',
+  Lab: 'flask-conical',
+  Quiz: 'help-circle',
+  Reading: 'book-open',
+  Project: 'folder-git-2'
+};
+
+/* ================= TASK MANAGEMENT ENGINE ================= */
+function addTask(e){
+  e.preventDefault();
+  const name = document.getElementById('taskName').value.trim();
+  const category = document.getElementById('taskCategory').value;
+  const priority = document.getElementById('taskPriority').value;
+  const effort = parseFloat(document.getElementById('taskEffort').value);
+  const deadline = document.getElementById('taskDeadline').value;
+
+  if(!name || !deadline || isNaN(effort)) return false;
+
+  state.tasks.push({
+    id: uid(),
+    name,
+    category,
+    priority,
+    effort,
+    deadline: new Date(deadline).toISOString(),
+    status: 'pending',
+    actualHours: null,
+    createdAt: new Date().toISOString()
+  });
+
+  saveTasks();
+  document.getElementById('taskForm').reset();
+  document.getElementById('taskPriority').value = 'Medium';
+  renderAll();
+  return false;
+}
+
+function completeTask(id){
+  const task = state.tasks.find(t => t.id === id);
+  if(!task) return;
+  const promptInput = prompt(`How many actual hours did you spend on "${task.name}"?`, task.effort);
+  if(promptInput === null) return;
+  const hours = parseFloat(promptInput);
+  if(isNaN(hours) || hours < 0){
+    alert('Please provide a valid non-negative number of hours.');
+    return;
+  }
+  task.status = 'completed';
+  task.actualHours = hours;
+  task.completedAt = new Date().toISOString();
+  saveTasks();
+  logFocusEvent('task');
+  renderAll();
+  if(!document.getElementById('tab-focus').classList.contains('hidden')) renderFocusLab();
+  triggerMicroReward(task);
+}
+
+function rescheduleTask(id){
+  const task = state.tasks.find(t => t.id === id);
+  if(!task) return;
+  // Push deadline forward by 24 hours
+  const current = new Date(task.deadline).getTime();
+  task.deadline = new Date(current + 24 * 3600 * 1000).toISOString();
+  task.status = 'pending';
+  saveTasks();
+  renderAll();
+  if(!document.getElementById('tab-schedule').classList.contains('hidden')){
+    renderSchedule();
+  }
+  if(!document.getElementById('tab-focus').classList.contains('hidden')) renderZenFlora();
+}
+
+function deleteTask(id){
+  if(!confirm('Are you sure you want to remove this task?')) return;
+  state.tasks = state.tasks.filter(t => t.id !== id);
+  saveTasks();
+  renderAll();
+}
+
+let currentFilter = 'all';
+function setFilter(f){
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    if(btn.dataset.filter === f){
+      btn.className = 'filter-btn px-3 py-1.5 rounded-lg font-medium transition bg-white shadow-xs text-sage-900';
+    } else {
+      btn.className = 'filter-btn px-3 py-1.5 rounded-lg font-medium transition text-warm-800/70 hover:text-sage-900';
+    }
+  });
+  renderTaskList();
+}
+
+function renderTaskList(){
+  const list = document.getElementById('taskList');
+  let tasks = [...state.tasks];
+  
+  if(currentFilter === 'urgent'){
+    tasks = tasks.filter(t => t.status === 'pending' && hoursUntil(t.deadline) < 24);
+  } else if(currentFilter === 'completed'){
+    tasks = tasks.filter(t => t.status === 'completed');
+  }
+
+  // Sort earliest deadline first
+  tasks.sort((a,b) => new Date(a.deadline) - new Date(b.deadline));
+
+  if(tasks.length === 0){
+    list.innerHTML = `
+      <div class="text-center py-12 text-warm-800/50">
+        <i data-lucide="inbox" class="w-10 h-10 mx-auto mb-2.5 opacity-30 text-sage-800"></i>
+        <p class="text-sm font-medium">No tasks in this category.</p>
+        <p class="text-xs text-warm-800/40 mt-0.5">Add a new academic assignment to get started.</p>
+      </div>`;
+    lucide.createIcons();
+    return;
+  }
+
+  list.innerHTML = tasks.map(t => {
+    const isCompleted = t.status === 'completed';
+    const hoursLeft = hoursUntil(t.deadline);
+    const isUrgent = !isCompleted && hoursLeft < 24 && hoursLeft > 0;
+    const isOverdue = !isCompleted && hoursLeft <= 0;
+
+    return `
+    <div class="bg-white/80 rounded-2xl p-4 border border-warm-200/80 transition-all hover:shadow-soft flex items-center justify-between gap-3 ${isCompleted ? 'opacity-60 bg-warm-100/40' : ''}">
+      <div class="flex items-start gap-3.5 min-w-0">
+        <div class="w-10 h-10 rounded-xl bg-sage-100/80 border border-sage-200 flex items-center justify-center shrink-0 mt-0.5">
+          <i data-lucide="${categoryIcons[t.category] || 'file-text'}" class="w-5 h-5 text-sage-700"></i>
+        </div>
+        <div class="min-w-0">
+          <p class="text-sm font-bold text-sage-900 truncate ${isCompleted ? 'line-through text-warm-800/50' : ''}">${escapeHtml(t.name)}</p>
+          <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${priorityBadges[t.priority]}">${t.priority}</span>
+            <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-warm-100 text-warm-800/70 border border-warm-200">${t.category}</span>
+            <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-warm-100 text-warm-800/70 border border-warm-200">${t.effort}h est.</span>
+            ${isUrgent ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-terracotta-400/15 text-terracotta-500 border border-terracotta-400/30 gentle-pulse">Urgent (<24h)</span>` : ''}
+            ${isOverdue ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-terracotta-400 text-white">Overdue</span>` : ''}
+            ${isCompleted ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">✓ Done (${t.actualHours}h actual)</span>` : ''}
+          </div>
+          <p class="text-xs text-warm-800/60 mt-1.5 flex items-center gap-1.5">
+            <i data-lucide="calendar" class="w-3 h-3 text-sage-600"></i> Due: ${fmtDateTime(t.deadline)} 
+            <span class="text-warm-800/30">•</span> 
+            <span class="font-semibold ${isOverdue ? 'text-terracotta-500' : 'text-sage-700'}">${isCompleted ? 'Finished' : humanCountdown(t.deadline)}</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1 shrink-0">
+        ${!isCompleted ? `
+          <button onclick="completeTask('${t.id}')" title="Mark Done" class="p-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition">
+            <i data-lucide="check" class="w-4 h-4"></i>
+          </button>
+          <button onclick="rescheduleTask('${t.id}')" title="Missed / Reschedule (+24h)" class="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition">
+            <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+          </button>
+        ` : ''}
+        <button onclick="deleteTask('${t.id}')" title="Delete Task" class="p-2 rounded-xl hover:bg-warm-200 text-warm-800/60 hover:text-terracotta-500 transition">
+          <i data-lucide="trash-2" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+
+  lucide.createIcons();
+}
+
+function renderTicker(){
+  const ticker = document.getElementById('ticker');
+  const upcoming = state.tasks
+    .filter(t => t.status === 'pending' && hoursUntil(t.deadline) <= 48)
+    .sort((a,b) => new Date(a.deadline) - new Date(b.deadline));
+
+  if(upcoming.length === 0){
+    ticker.innerHTML = `
+      <div class="text-xs text-warm-800/60 py-2.5 px-3 bg-warm-100/60 rounded-2xl w-full flex items-center gap-2">
+        <i data-lucide="smile" class="w-4 h-4 text-sage-600"></i> No urgent deadlines in the next 48 hours. Clear headspace!
+      </div>`;
+    lucide.createIcons();
+    return;
+  }
+
+  ticker.innerHTML = upcoming.map(t => {
+    const isOverdue = hoursUntil(t.deadline) <= 0;
+    return `
+      <div class="bg-white px-4 py-3 rounded-2xl border ${isOverdue ? 'border-terracotta-400/60' : 'border-warm-200'} shadow-xs min-w-[210px] shrink-0">
+        <div class="flex items-center justify-between gap-1 mb-1">
+          <span class="text-[10px] font-bold px-1.5 py-0.2 rounded border ${priorityBadges[t.priority]}">${t.priority}</span>
+          <span class="text-[11px] font-bold ${isOverdue ? 'text-terracotta-500' : 'text-amber-800'}">${humanCountdown(t.deadline)}</span>
+        </div>
+        <p class="text-xs font-bold text-sage-900 truncate max-w-[180px]">${escapeHtml(t.name)}</p>
+        <p class="text-[10px] text-warm-800/50 mt-1">${t.category} • ${t.effort} hrs</p>
+      </div>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+function renderStatStrip(){
+  const pending = state.tasks.filter(t => t.status === 'pending');
+  const totalEffort = pending.reduce((s,t) => s + t.effort, 0);
+  const urgentCount = pending.filter(t => hoursUntil(t.deadline) < 24).length;
+  const completedCount = state.tasks.filter(t => t.status === 'completed').length;
+
+  const stats = [
+    { label: 'Pending Coursework', val: pending.length, sub: 'Items in queue', icon: 'layers', color: 'text-sage-700', bg: 'bg-sage-100' },
+    { label: 'Effort Required', val: totalEffort.toFixed(1) + 'h', sub: `vs ${state.availableHours}h available`, icon: 'gauge', color: totalEffort > state.availableHours ? 'text-terracotta-500' : 'text-sage-700', bg: 'bg-warm-100' },
+    { label: 'Urgent (<24 Hours)', val: urgentCount, sub: 'Needs immediate focus', icon: 'flame', color: urgentCount > 0 ? 'text-terracotta-500' : 'text-warm-800/60', bg: 'bg-warm-100' },
+    { label: 'Tasks Mastered', val: completedCount, sub: 'Successfully logged', icon: 'award', color: 'text-sage-700', bg: 'bg-sage-100' },
+  ];
+
+  document.getElementById('statStrip').innerHTML = stats.map(s => `
+    <div class="bg-warm-50 rounded-3xl p-5 border border-warm-200/80 shadow-soft">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-bold text-warm-800/60 uppercase tracking-wider">${s.label}</span>
+        <div class="w-8 h-8 rounded-xl ${s.bg} flex items-center justify-center">
+          <i data-lucide="${s.icon}" class="w-4 h-4 ${s.color}"></i>
+        </div>
+      </div>
+      <p class="text-2xl font-extrabold text-sage-900 tracking-tight">${s.val}</p>
+      <p class="text-[11px] text-warm-800/50 mt-0.5">${s.sub}</p>
+    </div>`).join('');
+
+  document.getElementById('taskCounterFooter').textContent = `${pending.length} pending tasks`;
+  lucide.createIcons();
+}
+
+/* ================= CHRONOTYPE & CIRCADIAN RHYTHM ENGINE ================= */
+const DEEP_WORK_CATEGORIES = ['Assignment', 'Lab', 'Project'];
+const LIGHT_WORK_CATEGORIES = ['Reading'];
+const POST_LUNCH_DIP = { start: 13, end: 15 }; // 1 PM – 3 PM, near-universal circadian dip
+
+function isPeakHour(hour){
+  const { peakStart, peakEnd } = state.chronotype;
+  if(peakStart <= peakEnd) return hour >= peakStart && hour < peakEnd;
+  return hour >= peakStart || hour < peakEnd; // wraps past midnight (e.g. night owl 22 -> 2)
+}
+function isPostLunchDip(hour){
+  return hour >= POST_LUNCH_DIP.start && hour < POST_LUNCH_DIP.end;
+}
+function classifyCognitiveLoad(task){
+  if(DEEP_WORK_CATEGORIES.includes(task.category)) return 'deep';
+  if(LIGHT_WORK_CATEGORIES.includes(task.category)) return 'light';
+  return 'neutral';
+}
+function chronotypeAdjustment(task, hour){
+  const load = classifyCognitiveLoad(task);
+  let bonus = 0;
+  if(isPeakHour(hour)){
+    if(load === 'deep') bonus += 5;
+    else if(load === 'light') bonus -= 3;
+  }
+  if(isPostLunchDip(hour)){
+    if(load === 'light') bonus += 4;
+    else if(load === 'deep') bonus -= 3;
+  }
+  return bonus;
+}
+function chronoLabel(){
+  const { type, peakStart, peakEnd } = state.chronotype;
+  const fmtH = h => {
+    const hh = ((h % 24) + 24) % 24;
+    const period = hh >= 12 ? 'PM' : 'AM';
+    const h12 = hh % 12 === 0 ? 12 : hh % 12;
+    return `${h12}${period}`;
+  };
+  const name = type === 'early' ? 'Early Bird' : type === 'night' ? 'Night Owl' : 'Custom';
+  return { name, window: `${fmtH(peakStart)} – ${fmtH(peakEnd)}` };
+}
+function setChronotype(type){
+  if(type === 'custom'){
+    state.chronotype.type = 'custom';
+    // seed sensible custom defaults from whichever preset was last active
+    if(!document.getElementById('customPeakStart').value){
+      document.getElementById('customPeakStart').value = '06:00';
+      document.getElementById('customPeakEnd').value = '11:00';
+      state.chronotype.peakStart = 6;
+      state.chronotype.peakEnd = 11;
+    }
+    document.getElementById('customPeakRow').classList.remove('hidden');
+  } else {
+    state.chronotype.type = type;
+    state.chronotype.peakStart = CHRONOTYPE_PRESETS[type].peakStart;
+    state.chronotype.peakEnd = CHRONOTYPE_PRESETS[type].peakEnd;
+    document.getElementById('customPeakRow').classList.add('hidden');
+  }
+  saveChronotype();
+  renderChronoUI();
+  if(!document.getElementById('tab-schedule').classList.contains('hidden')) renderSchedule();
+}
+function updateCustomPeak(){
+  const startVal = document.getElementById('customPeakStart').value;
+  const endVal = document.getElementById('customPeakEnd').value;
+  if(startVal) state.chronotype.peakStart = parseInt(startVal.split(':')[0], 10);
+  if(endVal) state.chronotype.peakEnd = parseInt(endVal.split(':')[0], 10);
+  saveChronotype();
+  renderChronoUI();
+  if(!document.getElementById('tab-schedule').classList.contains('hidden')) renderSchedule();
+}
+function renderChronoUI(){
+  document.querySelectorAll('.chrono-btn').forEach(btn => {
+    btn.classList.toggle('is-active', btn.dataset.chrono === state.chronotype.type);
+  });
+  if(state.chronotype.type === 'custom'){
+    document.getElementById('customPeakRow').classList.remove('hidden');
+    const pad = n => String(n).padStart(2, '0');
+    document.getElementById('customPeakStart').value = `${pad(state.chronotype.peakStart)}:00`;
+    document.getElementById('customPeakEnd').value = `${pad(state.chronotype.peakEnd % 24)}:00`;
+  } else {
+    document.getElementById('customPeakRow').classList.add('hidden');
+  }
+  const { name, window } = chronoLabel();
+  document.getElementById('chronoSummary').innerHTML =
+    `You're set as an <strong>${name}</strong>. Your high-alertness window is <strong>${window}</strong> — deep-work tasks funnel there first.`;
+}
+
+/* ================= FOCUS HEATMAP ================= */
+const HEATMAP_HOURS = Array.from({ length: 18 }, (_, i) => i + 6); // 6 AM -> 11 PM
+const HEATMAP_DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function logFocusEvent(type){
+  const now = new Date();
+  state.focusLog.push({ day: now.getDay(), hour: now.getHours(), type });
+  if(state.focusLog.length > 400) state.focusLog = state.focusLog.slice(-400);
+  saveFocusLog();
+}
+
+function renderHeatmap(){
+  const counts = {};
+  let max = 0;
+  state.focusLog.forEach(ev => {
+    if(ev.hour < 6) return; // outside displayed range
+    const key = `${ev.day}-${ev.hour}`;
+    counts[key] = (counts[key] || 0) + 1;
+    if(counts[key] > max) max = counts[key];
+  });
+
+  const colorFor = (count) => {
+    if(count === 0) return '#EFE9DC';
+    const ratio = Math.min(count / (max || 1), 1);
+    // interpolate warm sage-100 -> sage-900
+    const stops = [
+      { r: 205, g: 215, b: 204 }, // sage-200-ish
+      { r: 138, g: 166, b: 142 }, // sage-400
+      { r: 82,  g: 112, b: 86  }, // sage-600
+      { r: 31,  g: 42,  b: 33  }  // sage-900
+    ];
+    const scaled = ratio * (stops.length - 1);
+    const i = Math.min(Math.floor(scaled), stops.length - 2);
+    const t = scaled - i;
+    const c1 = stops[i], c2 = stops[i + 1];
+    const r = Math.round(c1.r + (c2.r - c1.r) * t);
+    const g = Math.round(c1.g + (c2.g - c1.g) * t);
+    const b = Math.round(c1.b + (c2.b - c1.b) * t);
+    return `rgb(${r},${g},${b})`;
+  };
+
+  let html = `<div class="heatmap-grid">`;
+  html += `<div></div>`;
+  HEATMAP_HOURS.forEach(h => {
+    html += `<div class="heatmap-hour-label">${h % 12 === 0 ? 12 : h % 12}${h >= 12 ? 'p' : 'a'}</div>`;
+  });
+  HEATMAP_DAYS.forEach((dayName, dayIdx) => {
+    html += `<div class="heatmap-label">${dayName}</div>`;
+    HEATMAP_HOURS.forEach(h => {
+      const count = counts[`${dayIdx}-${h}`] || 0;
+      const peakClass = isPeakHour(h) ? 'is-peak' : isPostLunchDip(h) ? 'is-dip' : '';
+      html += `<div class="heatmap-cell ${peakClass}" style="background:${colorFor(count)};" title="${dayName} ${h}:00 — ${count} focus event${count === 1 ? '' : 's'}"></div>`;
+    });
+  });
+  html += `</div>`;
+  document.getElementById('focusHeatmap').innerHTML = html;
+}
+
+/* ================= BREAK SUGGESTIONS ================= */
+const BREAK_POOL = {
+  light: [
+    { icon: 'coffee',   title: 'Slow tea break',        desc: 'Brew something warm and let your mind idle for 5 minutes.' },
+    { icon: 'wind',     title: 'Window-gaze reset',     desc: 'Look at something 20+ feet away for 20 seconds to rest your eyes.' },
+    { icon: 'footprints', title: 'Short stroll',        desc: 'A relaxed 5-minute walk, no phone, just movement.' },
+    { icon: 'droplets', title: 'Hydrate mindfully',     desc: 'Refill your bottle and drink a full glass, slowly.' }
+  ],
+  moderate: [
+    { icon: 'footprints', title: 'Stretch & shake out', desc: '2 minutes of shoulder rolls, neck stretches, and a stand-up.' },
+    { icon: 'droplets', title: 'Hydrate + reset',       desc: 'Drink water and take 5 deep breaths before the next block.' },
+    { icon: 'brain',    title: 'Quick recall quiz',     desc: 'DYNAMIC_QUIZ' },
+    { icon: 'wind',     title: 'Box breathing',         desc: '4 seconds in, 4 hold, 4 out, 4 hold — repeat 4 times.' }
+  ],
+  heavy: [
+    { icon: 'footprints', title: 'Real walk outside',   desc: 'Step away for 10 minutes — fresh air resets a fatigued mind.' },
+    { icon: 'brain',    title: 'Power micro-nap',       desc: 'Close your eyes for 10 minutes if you have a quiet spot.' },
+    { icon: 'droplets', title: 'Hydrate + light snack',  desc: 'A heavy load burns real energy — refuel before the next block.' },
+    { icon: 'brain',    title: 'Quick recall quiz',     desc: 'DYNAMIC_QUIZ' }
+  ]
+};
+
+function quickQuizPrompt(){
+  const withTopics = state.exams.filter(e => e.topics && e.topics.some(t => !t.done));
+  if(withTopics.length){
+    const ex = withTopics[0];
+    const topic = ex.topics.find(t => !t.done);
+    return `Without looking: what's one key idea from "${topic.name}" (${ex.subject})?`;
+  }
+  return 'Without looking: name 3 things you just worked on, out loud.';
+}
+
+function getWorkloadIntensity(){
+  const pending = state.tasks.filter(t => t.status === 'pending');
+  const totalEffort = pending.reduce((s,t) => s + t.effort, 0);
+  if(totalEffort <= state.availableHours * 0.5) return 'light';
+  if(totalEffort <= state.availableHours) return 'moderate';
+  return 'heavy';
+}
+
+function shuffleSample(arr, n){
+  const copy = [...arr];
+  for(let i = copy.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, n);
+}
+
+function resolveBreakDesc(b){
+  return b.desc === 'DYNAMIC_QUIZ' ? quickQuizPrompt() : b.desc;
+}
+
+function pickBreakLine(intensity){
+  const pool = BREAK_POOL[intensity] || BREAK_POOL.moderate;
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+  return `${pick.title} — ${resolveBreakDesc(pick)}`;
+}
+
+function renderBreakSuggestions(){
+  const intensity = getWorkloadIntensity();
+  const labelMap = {
+    light: 'Light day — gentle, restorative breaks',
+    moderate: 'Moderate load — active resets between blocks',
+    heavy: 'Heavy load — longer, more deliberate recovery'
+  };
+  document.getElementById('breakIntensityLabel').textContent = labelMap[intensity];
+
+  const picks = shuffleSample(BREAK_POOL[intensity], 3);
+  document.getElementById('breakSuggestions').innerHTML = picks.map(b => `
+    <div class="bg-white rounded-2xl p-4 border border-warm-200/80">
+      <div class="w-8 h-8 rounded-xl bg-sage-100 flex items-center justify-center text-sage-700 mb-2.5">
+        <i data-lucide="${b.icon}" class="w-4 h-4"></i>
+      </div>
+      <p class="text-sm font-bold text-sage-900">${escapeHtml(b.title)}</p>
+      <p class="text-xs text-warm-800/60 mt-1 leading-relaxed">${escapeHtml(resolveBreakDesc(b))}</p>
+    </div>`).join('');
+  lucide.createIcons();
+}
+
+/* ================= ZEN FLORA (procedural canvas plant) ================= */
+function mulberry32(seed){
+  return function(){
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function renderZenFlora(){
+  const canvas = document.getElementById('zenCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const overdueCount = state.tasks.filter(t => t.status === 'pending' && hoursUntil(t.deadline) <= 0).length;
+  const health = Math.max(0.18, 1 - overdueCount * 0.18); // 1 = thriving, near 0 = wilting
+  const sessions = state.zenSessions;
+  const depth = Math.min(2 + Math.floor(sessions / 3), 7);
+  const rand = mulberry32(sessions * 7919 + 13);
+
+  // soil
+  ctx.fillStyle = '#C7B99D';
+  ctx.fillRect(0, H - 14, W, 14);
+
+  const trunkColor = health > 0.6 ? '#527056' : health > 0.35 ? '#8AA68E' : '#B99B6B';
+  const leafHealthy = ['#8AA68E', '#688C6D', '#527056'];
+  const leafWilting = ['#D9C79A', '#C9A66B', '#E07A5F'];
+
+  function branch(x, y, len, angle, width, level){
+    if(level > depth || len < 4) {
+      // draw a leaf at the tip if we grew at least one level
+      if(level > 1){
+        const leafSet = health > 0.5 ? leafHealthy : leafWilting;
+        const color = leafSet[Math.floor(rand() * leafSet.length)];
+        const droop = health > 0.5 ? 0 : (1 - health) * 0.6; // wilted leaves droop downward
+        const lx = x + Math.cos(angle + droop) * 10;
+        const ly = y + Math.sin(angle + droop) * 10;
+        ctx.beginPath();
+        ctx.ellipse(lx, ly, 6, 3.4, angle + droop, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.92;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+      return;
+    }
+
+    const endX = x + Math.cos(angle) * len;
+    const endY = y + Math.sin(angle) * len;
+
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(endX, endY);
+    ctx.strokeStyle = trunkColor;
+    ctx.lineWidth = Math.max(1, width);
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    const branches = level < 2 ? 2 : (rand() > 0.35 ? 2 : 1);
+    for(let i = 0; i < branches; i++){
+      const spread = 0.45 + rand() * 0.35;
+      const dir = i % 2 === 0 ? -1 : 1;
+      const nextAngle = angle + dir * spread * (0.6 + (1 - health) * 0.4);
+      branch(endX, endY, len * (0.68 + rand() * 0.12), nextAngle, width * 0.72, level + 1);
+    }
+  }
+
+  // trunk grows taller with more sessions, capped
+  const trunkLen = 30 + Math.min(sessions, 12) * 4;
+  branch(W / 2, H - 14, trunkLen, -Math.PI / 2, 7, 1);
+
+  const caption = document.getElementById('zenCaption');
+  if(sessions === 0){
+    caption.textContent = 'Complete a 25-minute focus session to plant your first sprout.';
+  } else if(health < 0.4){
+    caption.textContent = `${sessions} sessions logged, but ${overdueCount} overdue task${overdueCount === 1 ? '' : 's'} are wilting your Flora. Clear them to bring it back.`;
+  } else if(health < 0.75){
+    caption.textContent = `${sessions} sessions grown. A couple of overdue tasks are dulling a few leaves.`;
+  } else {
+    caption.textContent = `${sessions} focus sessions grown into this plant — thriving pace, keep it up.`;
+  }
+}
+
+/* ================= MICRO-REWARD SYSTEM ================= */
+const REWARD_QUOTES = [
+  "\"Every finished task is a small victory over yesterday's version of you.\"",
+  "\"You didn't just check a box — you kept a promise to yourself.\"",
+  "\"Momentum is built one completed task at a time. You just added to it.\"",
+  "\"Discipline is remembering what you want, even after the task is done.\"",
+  "\"The version of you a week from now is thanking you right now.\"",
+  "\"Small wins compound. That's exactly what just happened.\""
+];
+
+function triggerMicroReward(task){
+  state.rewardsUnlocked++;
+  saveRewards();
+  // Roughly 1 in 3 completions unlocks a mini-game; the rest unlock a motivational quote.
+  const unlockGame = state.rewardsUnlocked % 3 === 0;
+  if(unlockGame){
+    showRewardGamePicker(task);
+  } else {
+    showRewardQuote(task);
+  }
+}
+
+function showRewardQuote(task){
+  const quote = REWARD_QUOTES[Math.floor(Math.random() * REWARD_QUOTES.length)];
+  showRewardModal(`
+    <div class="w-14 h-14 mx-auto rounded-2xl bg-sage-100 flex items-center justify-center text-sage-700 mb-3">
+      <i data-lucide="sparkles" class="w-7 h-7"></i>
+    </div>
+    <p class="text-[11px] font-bold uppercase tracking-wider text-sage-600 mb-2">Task Complete • Reward Unlocked</p>
+    <p class="text-sm font-serif italic text-sage-900 leading-relaxed">${quote}</p>
+    <p class="text-xs text-warm-800/50 mt-3">"${escapeHtml(task.name)}" — logged and done.</p>
+    <button onclick="closeRewardModal()" class="mt-5 bg-sage-600 hover:bg-sage-700 text-white text-xs font-semibold px-5 py-2.5 rounded-xl transition">Keep going</button>
+  `);
+}
+
+function showRewardGamePicker(task){
+  showRewardModal(`
+    <div class="w-14 h-14 mx-auto rounded-2xl bg-terracotta-400/15 flex items-center justify-center text-terracotta-500 mb-3">
+      <i data-lucide="gamepad-2" class="w-7 h-7"></i>
+    </div>
+    <p class="text-[11px] font-bold uppercase tracking-wider text-terracotta-500 mb-2">Mini-Game Unlocked!</p>
+    <p class="text-sm text-sage-900 mb-4">You've completed <strong>${state.rewardsUnlocked}</strong> tasks. Take a 15-second brain break:</p>
+    <div class="grid grid-cols-2 gap-3">
+      <button onclick="startBubbleGame()" class="bg-white border border-warm-200 hover:border-sage-400 rounded-2xl p-4 transition">
+        <i data-lucide="circle" class="w-5 h-5 mx-auto text-sage-600 mb-1.5"></i>
+        <p class="text-xs font-bold text-sage-900">Focus Pop</p>
+        <p class="text-[10px] text-warm-800/50">Click bubbles fast</p>
+      </button>
+      <button onclick="startMemoryGame()" class="bg-white border border-warm-200 hover:border-sage-400 rounded-2xl p-4 transition">
+        <i data-lucide="brain" class="w-5 h-5 mx-auto text-sage-600 mb-1.5"></i>
+        <p class="text-xs font-bold text-sage-900">Memory Flip</p>
+        <p class="text-[10px] text-warm-800/50">Match the pairs</p>
+      </button>
+    </div>
+    <button onclick="closeRewardModal()" class="mt-4 text-xs text-warm-800/50 hover:text-warm-800 underline">Skip, back to work</button>
+  `);
+}
+
+function showRewardModal(html){
+  document.getElementById('rewardModalBody').innerHTML = html;
+  document.getElementById('rewardModal').classList.remove('hidden');
+  lucide.createIcons();
+}
+function closeRewardModal(){
+  clearInterval(bubbleGameState.interval);
+  document.getElementById('rewardModal').classList.add('hidden');
+  document.getElementById('rewardModalBody').innerHTML = '';
+}
+
+/* --- Mini-Game 1: Focus Pop (click bubbles before time runs out) --- */
+let bubbleGameState = { score: 0, timeLeft: 15, interval: null };
+function startBubbleGame(){
+  bubbleGameState = { score: 0, timeLeft: 15, interval: null };
+  renderBubbleGame();
+  bubbleGameState.interval = setInterval(() => {
+    bubbleGameState.timeLeft--;
+    if(bubbleGameState.timeLeft <= 0){
+      clearInterval(bubbleGameState.interval);
+      endBubbleGame();
+      return;
+    }
+    renderBubbleGame();
+  }, 1000);
+}
+function renderBubbleGame(){
+  const colors = ['#8AA68E','#527056','#E07A5F','#C7B99D'];
+  let bubbles = '';
+  for(let i = 0; i < 6; i++){
+    const top = 10 + Math.random() * 65;
+    const left = 5 + Math.random() * 80;
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    bubbles += `<button onclick="popBubble(this)" style="position:absolute; top:${top}%; left:${left}%; background:${color};" class="w-9 h-9 rounded-full shadow-sm active:scale-75 transition-transform"></button>`;
+  }
+  document.getElementById('rewardModalBody').innerHTML = `
+    <p class="text-[11px] font-bold uppercase tracking-wider text-sage-600 mb-1">Focus Pop</p>
+    <div class="flex items-center justify-center gap-4 mb-2 text-xs font-bold">
+      <span class="text-sage-800">Score: <span id="bubbleScore">${bubbleGameState.score}</span></span>
+      <span class="text-terracotta-500">Time: <span id="bubbleTime">${bubbleGameState.timeLeft}</span>s</span>
+    </div>
+    <div class="relative w-full h-56 bg-sage-50 rounded-2xl border border-sage-200 overflow-hidden">${bubbles}</div>
+  `;
+}
+function popBubble(el){
+  bubbleGameState.score++;
+  const scoreEl = document.getElementById('bubbleScore');
+  if(scoreEl) scoreEl.textContent = bubbleGameState.score;
+  const top = 10 + Math.random() * 65;
+  const left = 5 + Math.random() * 80;
+  el.style.top = top + '%';
+  el.style.left = left + '%';
+}
+function endBubbleGame(){
+  showRewardModal(`
+    <div class="w-14 h-14 mx-auto rounded-2xl bg-sage-100 flex items-center justify-center text-sage-700 mb-3">
+      <i data-lucide="trophy" class="w-7 h-7"></i>
+    </div>
+    <p class="text-[11px] font-bold uppercase tracking-wider text-sage-600 mb-2">Focus Pop — Time's Up!</p>
+    <p class="text-2xl font-extrabold text-sage-900">${bubbleGameState.score} pops</p>
+    <p class="text-xs text-warm-800/60 mt-1">Nice reset. Back to it whenever you're ready.</p>
+    <button onclick="closeRewardModal()" class="mt-5 bg-sage-600 hover:bg-sage-700 text-white text-xs font-semibold px-5 py-2.5 rounded-xl transition">Close</button>
+  `);
+}
+
+/* --- Mini-Game 2: Memory Flip (match icon pairs) --- */
+let memoryGameState = { cards: [], flipped: [], matched: [], moves: 0 };
+function startMemoryGame(){
+  const icons = ['star','heart','sun','moon','leaf','flame'];
+  let deck = [...icons, ...icons].map((icon, idx) => ({ icon, idx, id: 'c' + idx }));
+  // shuffle
+  for(let i = deck.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  memoryGameState = { cards: deck, flipped: [], matched: [], moves: 0 };
+  renderMemoryGame();
+}
+function renderMemoryGame(){
+  const cardsHtml = memoryGameState.cards.map(c => {
+    const isUp = memoryGameState.flipped.includes(c.id) || memoryGameState.matched.includes(c.id);
+    return `<button onclick="flipMemoryCard('${c.id}')" 
+      class="aspect-square rounded-xl flex items-center justify-center transition-all ${isUp ? 'bg-sage-100 border-sage-300' : 'bg-sage-600 hover:bg-sage-700 border-sage-700'} border-2">
+      ${isUp ? `<i data-lucide="${c.icon}" class="w-5 h-5 text-sage-700"></i>` : ''}
+    </button>`;
+  }).join('');
+  document.getElementById('rewardModalBody').innerHTML = `
+    <p class="text-[11px] font-bold uppercase tracking-wider text-sage-600 mb-1">Memory Flip</p>
+    <p class="text-xs text-warm-800/60 mb-3">Moves: <span class="font-bold text-sage-900">${memoryGameState.moves}</span></p>
+    <div class="grid grid-cols-4 gap-2 max-w-xs mx-auto">${cardsHtml}</div>
+  `;
+  lucide.createIcons();
+}
+function flipMemoryCard(id){
+  if(memoryGameState.flipped.includes(id) || memoryGameState.matched.includes(id)) return;
+  if(memoryGameState.flipped.length >= 2) return;
+  memoryGameState.flipped.push(id);
+  if(memoryGameState.flipped.length === 2){
+    memoryGameState.moves++;
+    const [aId, bId] = memoryGameState.flipped;
+    const a = memoryGameState.cards.find(c => c.id === aId);
+    const b = memoryGameState.cards.find(c => c.id === bId);
+    if(a.icon === b.icon){
+      memoryGameState.matched.push(aId, bId);
+      memoryGameState.flipped = [];
+      renderMemoryGame();
+      if(memoryGameState.matched.length === memoryGameState.cards.length){
+        setTimeout(endMemoryGame, 400);
+      }
+    } else {
+      renderMemoryGame();
+      setTimeout(() => {
+        memoryGameState.flipped = [];
+        renderMemoryGame();
+      }, 700);
+    }
+  } else {
+    renderMemoryGame();
+  }
+}
+function endMemoryGame(){
+  showRewardModal(`
+    <div class="w-14 h-14 mx-auto rounded-2xl bg-sage-100 flex items-center justify-center text-sage-700 mb-3">
+      <i data-lucide="trophy" class="w-7 h-7"></i>
+    </div>
+    <p class="text-[11px] font-bold uppercase tracking-wider text-sage-600 mb-2">Memory Flip — Solved!</p>
+    <p class="text-2xl font-extrabold text-sage-900">${memoryGameState.moves} moves</p>
+    <p class="text-xs text-warm-800/60 mt-1">Sharp mind. Time to get back to the queue.</p>
+    <button onclick="closeRewardModal()" class="mt-5 bg-sage-600 hover:bg-sage-700 text-white text-xs font-semibold px-5 py-2.5 rounded-xl transition">Close</button>
+  `);
+}
+
+/* ================= FOCUS LAB (combined render) ================= */
+function renderFocusLab(){
+  renderChronoUI();
+  renderHeatmap();
+  renderBreakSuggestions();
+  renderZenFlora();
+  lucide.createIcons();
+}
+
+/* ================= TIME MANAGEMENT & SMART SCHEDULING ================= */
+function calculateTaskScore(task){
+  const priorityWeight = { High: 4, Medium: 2.5, Low: 1 }[task.priority] || 1;
+  const hoursLeft = hoursUntil(task.deadline);
+  let urgency = 0;
+  if(hoursLeft <= 0) urgency = 6;
+  else if(hoursLeft < 12) urgency = 5;
+  else if(hoursLeft < 24) urgency = 4;
+  else if(hoursLeft < 48) urgency = 3;
+  else if(hoursLeft < 72) urgency = 2;
+  else urgency = 1;
+
+  // Favor tasks that can fit today's budget
+  const budgetBonus = task.effort <= state.availableHours ? 1 : 0;
+  return (priorityWeight * 3) + (urgency * 2.5) + budgetBonus;
+}
+
+/* Cognitive Load Balancer: once this many consecutive hours of "deep"
+   (high-effort) work stack up with no lighter task or proper rest between
+   them, the scheduler intervenes — swapping in a lighter/neutral task if one
+   is available, or forcing a longer recovery break — to prevent burnout. */
+const DEEP_LOAD_THRESHOLD_HOURS = 3;
+const RECOVERY_BREAK_MIN = 20;
+
+function generateSchedule(){
+  const pending = state.tasks.filter(t => t.status === 'pending');
+  let remaining = [...pending];
+
+  let hoursLeft = state.availableHours;
+  let cursor = new Date();
+  cursor.setSeconds(0,0);
+  cursor.setMinutes(Math.ceil(cursor.getMinutes() / 15) * 15);
+
+  const blocks = [];
+  const deferred = [];
+  const workloadIntensity = getWorkloadIntensity();
+  let consecutiveDeepHours = 0;
+  let cogBalanceEvents = 0;
+
+  while(remaining.length){
+    if(hoursLeft <= 0.05) break;
+
+    // Re-score against the *current* point in the day so deep-work lands
+    // in the chronotype peak window and light work drifts to the post-lunch dip.
+    const hourOfDay = cursor.getHours();
+    remaining.sort((a,b) =>
+      (calculateTaskScore(b) + chronotypeAdjustment(b, hourOfDay)) -
+      (calculateTaskScore(a) + chronotypeAdjustment(a, hourOfDay))
+    );
+
+    let t = remaining[0];
+    let forcedRecoveryBreak = false;
+
+    // ---- Cognitive Load Balancer check ----
+    if(classifyCognitiveLoad(t) === 'deep' && consecutiveDeepHours >= DEEP_LOAD_THRESHOLD_HOURS){
+      // Look further down the queue for a lighter/neutral task to redistribute in.
+      const altIdx = remaining.findIndex(cand => classifyCognitiveLoad(cand) !== 'deep');
+      if(altIdx > 0){
+        t = remaining[altIdx];
+        remaining.splice(altIdx, 1);
+        consecutiveDeepHours = 0; // a lighter task resets the deep-work streak
+        cogBalanceEvents++;
+      } else {
+        // No lighter task available — force a longer recovery break instead
+        // of overstacking high-effort work, then proceed with the deep task.
+        remaining.shift();
+        forcedRecoveryBreak = true;
+        consecutiveDeepHours = 0;
+        cogBalanceEvents++;
+      }
+    } else {
+      remaining.shift();
+    }
+
+    if(forcedRecoveryBreak){
+      const breakEnd = new Date(cursor.getTime() + RECOVERY_BREAK_MIN * 60 * 1000);
+      blocks.push({
+        type: 'break',
+        start: cursor,
+        end: breakEnd,
+        suggestion: 'Cognitive Load Balancer: extended recovery break — too many high-effort tasks were stacked back-to-back.',
+        balanced: true
+      });
+      cursor = breakEnd;
+      hoursLeft -= RECOVERY_BREAK_MIN / 60;
+      if(hoursLeft <= 0.05){ remaining.unshift(t); break; }
+    }
+
+    const alloc = Math.min(t.effort, hoursLeft);
+    const start = new Date(cursor);
+    const end = new Date(cursor.getTime() + alloc * 3600 * 1000);
+    const isPartial = alloc < (t.effort - 0.01);
+    const load = classifyCognitiveLoad(t);
+    let alignment = null;
+    if(isPeakHour(hourOfDay) && load === 'deep') alignment = 'peak-deep';
+    else if(isPostLunchDip(hourOfDay) && load === 'light') alignment = 'dip-light';
+
+    blocks.push({
+      type: 'task',
+      task: t,
+      start,
+      end,
+      alloc,
+      partial: isPartial,
+      alignment
+    });
+
+    consecutiveDeepHours = (load === 'deep') ? (consecutiveDeepHours + alloc) : 0;
+
+    if(isPartial){
+      deferred.push({ name: t.name + ' (remaining portion)', effort: +(t.effort - alloc).toFixed(2), priority: t.priority });
+    }
+
+    hoursLeft -= alloc;
+    // Insert a break — its suggestion is matched to current workload intensity
+    const breakStart = end;
+    cursor = new Date(breakStart.getTime() + 10 * 60 * 1000);
+    if(hoursLeft > 0.05 && remaining.length){
+      blocks.push({
+        type: 'break',
+        start: breakStart,
+        end: cursor,
+        suggestion: pickBreakLine(workloadIntensity)
+      });
+    }
+  }
+
+  // Anything still unscheduled (ran out of budget) is deferred
+  remaining.forEach(t => deferred.push({ name: t.name, effort: t.effort, priority: t.priority }));
+
+  const totalEffort = pending.reduce((s,t) => s + t.effort, 0);
+  const overload = totalEffort > state.availableHours;
+
+  return { blocks, deferred, overload, totalEffort, cogBalanceEvents };
+}
+
+function renderSchedule(){
+  const { blocks, deferred, overload, totalEffort, cogBalanceEvents } = generateSchedule();
+  const banner = document.getElementById('overloadBanner');
+
+  const { name, window } = chronoLabel();
+  const subtitleEl = document.getElementById('scheduleSubtitle');
+  if(subtitleEl) subtitleEl.textContent = `Prioritizes high-weight + imminent deadlines, tuned to your ${name} peak window (${window}).`;
+
+  if(overload){
+    banner.classList.remove('hidden');
+    banner.innerHTML = `
+      <div class="rounded-3xl p-5 border border-terracotta-400/40 bg-gradient-to-r from-terracotta-400/10 to-amber-100/40 flex items-start gap-4 fade-in">
+        <div class="w-10 h-10 rounded-2xl bg-terracotta-400/20 text-terracotta-500 flex items-center justify-center shrink-0 mt-0.5">
+          <i data-lucide="shield-alert" class="w-5 h-5"></i>
+        </div>
+        <div class="flex-1">
+          <div class="flex items-center gap-2">
+            <h4 class="text-sm font-bold text-terracotta-500">Academic Workload Overload Warning</h4>
+            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-terracotta-400/20 text-terracotta-500">Conflict Resolved</span>
+          </div>
+          <p class="text-xs text-warm-800/80 mt-1 leading-relaxed">
+            You require <strong>${totalEffort.toFixed(1)} hours</strong> to complete all active tasks, but have only budgeted <strong>${state.availableHours} hours</strong> for today.
+            To avoid cognitive fatigue, lower-priority tasks have been safely <strong>deferred to tomorrow</strong>:
+          </p>
+          <div class="flex flex-wrap gap-2 mt-2.5">
+            ${deferred.map(d => `
+              <span class="text-xs px-2.5 py-1 rounded-xl bg-white border border-warm-200 text-warm-800 font-medium">
+                ${escapeHtml(d.name)} • <span class="font-bold text-sage-800">${d.effort}h</span>
+              </span>`).join('')}
+          </div>
+        </div>
+      </div>`;
+  } else {
+    banner.classList.add('hidden');
+    banner.innerHTML = '';
+  }
+
+  const cogBanner = document.getElementById('cogLoadBanner');
+  if(cogBanner){
+    if(cogBalanceEvents > 0){
+      cogBanner.classList.remove('hidden');
+      cogBanner.innerHTML = `
+        <div class="rounded-3xl p-4 border border-sage-300/60 bg-sage-100/50 flex items-center gap-3 fade-in">
+          <div class="w-9 h-9 rounded-xl bg-sage-200/80 text-sage-800 flex items-center justify-center shrink-0">
+            <i data-lucide="scale" class="w-4.5 h-4.5"></i>
+          </div>
+          <p class="text-xs text-sage-900 leading-relaxed">
+            <strong>Cognitive Load Balancer active:</strong> redistributed ${cogBalanceEvents} block${cogBalanceEvents === 1 ? '' : 's'} of stacked high-effort tasks with lighter work or extra recovery time to help prevent burnout.
+          </p>
+        </div>`;
+    } else {
+      cogBanner.classList.add('hidden');
+      cogBanner.innerHTML = '';
+    }
+  }
+
+  const container = document.getElementById('scheduleBlocks');
+  if(blocks.length === 0){
+    container.innerHTML = `
+      <div class="text-center py-14 text-warm-800/50">
+        <i data-lucide="coffee" class="w-10 h-10 mx-auto mb-2 text-sage-600 opacity-40"></i>
+        <p class="text-sm font-bold text-sage-900">No study blocks for today</p>
+        <p class="text-xs text-warm-800/60 mt-1">All coursework complete! Take a breather or add new tasks.</p>
+      </div>`;
+    lucide.createIcons();
+    return;
+  }
+
+  const fmtT = d => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  container.innerHTML = blocks.map(b => {
+    if(b.type === 'break'){
+      return `
+        <div class="flex items-start gap-3 rounded-2xl p-3 ${b.balanced ? 'bg-amber-100/70 border border-amber-300/80' : 'bg-sage-100/70 border border-sage-200/80'}">
+          <div class="w-7 h-7 rounded-lg ${b.balanced ? 'bg-amber-200/80 text-amber-800' : 'bg-sage-200/80 text-sage-800'} flex items-center justify-center shrink-0 mt-0.5">
+            <i data-lucide="${b.balanced ? 'scale' : 'sparkles'}" class="w-3.5 h-3.5"></i>
+          </div>
+          <span class="text-xs font-semibold ${b.balanced ? 'text-amber-900' : 'text-sage-900'} leading-relaxed">${fmtT(b.start)} – ${fmtT(b.end)} • ${escapeHtml(b.suggestion || 'Mindful break — stretch, hydrate, or breathe.')}</span>
+        </div>`;
+    }
+
+    const alignmentTag = b.alignment === 'peak-deep'
+      ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-terracotta-400/15 text-terracotta-500 border border-terracotta-400/30 flex items-center gap-1"><i data-lucide="sun-moon" class="w-3 h-3"></i> Peak-hour deep work</span>`
+      : b.alignment === 'dip-light'
+      ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-warm-200 text-warm-800 border border-warm-300 flex items-center gap-1"><i data-lucide="coffee" class="w-3 h-3"></i> Post-lunch light task</span>`
+      : '';
+
+    return `
+      <div class="flex items-center justify-between gap-3 rounded-2xl p-4 bg-white border ${b.partial ? 'border-amber-300' : 'border-warm-200'} shadow-xs">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-10 h-10 rounded-xl bg-sage-100 flex items-center justify-center shrink-0">
+            <i data-lucide="${categoryIcons[b.task.category] || 'file-text'}" class="w-5 h-5 text-sage-700"></i>
+          </div>
+          <div class="min-w-0">
+            <p class="text-sm font-bold text-sage-900 truncate">${escapeHtml(b.task.name)}</p>
+            <p class="text-xs text-warm-800/60 mt-0.5">
+              <span class="font-mono font-semibold text-sage-800">${fmtT(b.start)} – ${fmtT(b.end)}</span> 
+              (${b.alloc.toFixed(2)}h planned ${b.partial ? '— partial block' : ''})
+            </p>
+            ${alignmentTag ? `<div class="mt-1.5">${alignmentTag}</div>` : ''}
+          </div>
+        </div>
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${priorityBadges[b.task.priority]} shrink-0">
+          ${b.task.priority}
+        </span>
+      </div>`;
+  }).join('');
+
+  lucide.createIcons();
+}
+
+/* ================= MINDFUL TIMER & AMBIENT AUDIO ================= */
+function getStudySec(){ return (state.timerPrefs.focusMin || 25) * 60; }
+function getBreakSec(){ return (state.timerPrefs.breakMin || 5) * 60; }
+
+let timerState = {
+  secondsLeft: 25 * 60,
+  total: 25 * 60,
+  mode: 'Focus',
+  running: false,
+  interval: null
+};
+
+// Student-adjustable focus/break length. Persisted so the schedule tab
+// remembers a student's preferred interval across sessions.
+function updateTimerPrefs(){
+  let focusMin = parseInt(document.getElementById('focusMinInput').value, 10);
+  let breakMin = parseInt(document.getElementById('breakMinInput').value, 10);
+  if(isNaN(focusMin) || focusMin < 5) focusMin = 25;
+  if(isNaN(breakMin) || breakMin < 1) breakMin = 5;
+  focusMin = Math.min(focusMin, 120);
+  breakMin = Math.min(breakMin, 30);
+  state.timerPrefs = { focusMin, breakMin };
+  saveTimerPrefs();
+  document.getElementById('focusMinInput').value = focusMin;
+  document.getElementById('breakMinInput').value = breakMin;
+  // Only snap the live countdown to the new length if the timer isn't
+  // mid-session, so students don't lose progress by tweaking the settings.
+  if(!timerState.running){
+    resetTimer();
+  }
+}
+
+function updateTimerDisplay(){
+  const m = Math.floor(timerState.secondsLeft / 60).toString().padStart(2, '0');
+  const s = Math.floor(timerState.secondsLeft % 60).toString().padStart(2, '0');
+  document.getElementById('timerDisplay').textContent = `${m}:${s}`;
+  document.getElementById('timerMode').textContent = `${timerState.mode === 'Focus' ? state.timerPrefs.focusMin + ' min focus' : state.timerPrefs.breakMin + ' min mindful rest'}`;
+  document.getElementById('timerModeBadge').textContent = timerState.mode === 'Focus' ? 'Study Interval' : 'Rest Break';
+
+  const circumference = 314.15;
+  const progress = 1 - (timerState.secondsLeft / timerState.total);
+  document.getElementById('timerRing').style.strokeDashoffset = (circumference * progress).toFixed(1);
+}
+
+function startTimer(){
+  if(timerState.running) return;
+  timerState.running = true;
+  timerState.interval = setInterval(() => {
+    timerState.secondsLeft--;
+    if(timerState.secondsLeft <= 0){
+      const wasFocus = timerState.mode === 'Focus';
+      timerState.mode = wasFocus ? 'Break' : 'Focus';
+      timerState.total = wasFocus ? getBreakSec() : getStudySec();
+      timerState.secondsLeft = timerState.total;
+      playMindfulChime();
+      newQuote();
+      if(wasFocus){
+        // A full focus session just completed
+        state.zenSessions++;
+        saveZenSessions();
+        logFocusEvent('pomodoro');
+        if(!document.getElementById('tab-focus').classList.contains('hidden')) renderFocusLab();
+      }
+    }
+    updateTimerDisplay();
+  }, 1000);
+}
+
+function pauseTimer(){
+  timerState.running = false;
+  clearInterval(timerState.interval);
+}
+
+function resetTimer(){
+  pauseTimer();
+  timerState.mode = 'Focus';
+  timerState.total = getStudySec();
+  timerState.secondsLeft = getStudySec();
+  updateTimerDisplay();
+}
+
+// Mindful synthesized sound via Web Audio API (Zero external audio file dependencies)
+let audioCtx = null;
+let noiseSource = null;
+let isAmbientPlaying = false;
+
+function toggleAmbient(){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  isAmbientPlaying = !isAmbientPlaying;
+  const btn = document.getElementById('ambientBtn');
+
+  if(isAmbientPlaying){
+    // Synthesize Brown/Pink relaxing noise
+    const bufferSize = audioCtx.sampleRate * 2;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const output = buffer.getChannelData(0);
+    let lastOut = 0.0;
+    for (let i = 0; i < bufferSize; i++) {
+      const white = Math.random() * 2 - 1;
+      output[i] = (lastOut + (0.02 * white)) / 1.02;
+      lastOut = output[i];
+      output[i] *= 0.15;
+    }
+    noiseSource = audioCtx.createBufferSource();
+    noiseSource.buffer = buffer;
+    noiseSource.loop = true;
+    const gain = audioCtx.createGain();
+    gain.gain.value = 0.2;
+    noiseSource.connect(gain).connect(audioCtx.destination);
+    noiseSource.start();
+    btn.innerHTML = `<i data-lucide="volume-2" class="w-4 h-4 text-emerald-700"></i> Mindful Brown Noise: <span class="font-bold text-emerald-800">Playing</span>`;
+  } else {
+    if(noiseSource){
+      noiseSource.stop();
+      noiseSource.disconnect();
+      noiseSource = null;
+    }
+    btn.innerHTML = `<i data-lucide="volume-2" class="w-4 h-4 text-sage-600"></i> Mindful Brown Noise: <span class="font-bold text-warm-800/60">Off</span>`;
+  }
+  lucide.createIcons();
+}
+
+function playMindfulChime(){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const t = audioCtx.currentTime;
+  [440, 554.37, 659.25].forEach((freq, idx) => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.001, t + idx * 0.12);
+    gain.gain.exponentialRampToValueAtTime(0.18, t + idx * 0.12 + 0.04);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + idx * 0.12 + 1.6);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(t + idx * 0.12);
+    osc.stop(t + idx * 0.12 + 1.7);
+  });
+}
+
+const mindfulQuotes = [
+  "\"It is not that we have a short time to live, but that we waste a lot of it. Focused study honors your future self.\"",
+  "\"Small disciplines repeated with consistency every day lead to great achievements gained slowly over time.\"",
+  "\"Focus is a muscle. Train it gently with 25-minute sprints and restorative rest.\"",
+  "\"You do not rise to the level of your goals. You fall to the level of your systems.\"",
+  "\"Patience and consistent effort outperform sporadic bursts of panic study every single semester.\"",
+  "\"A calm mind absorbs deep technical concepts faster than an anxious one.\""
+];
+
+function newQuote(){
+  document.getElementById('quoteText').textContent = mindfulQuotes[Math.floor(Math.random() * mindfulQuotes.length)];
+}
+
+/* ================= EXAMS & SYLLABUS TRACKER ================= */
+function addExam(e){
+  e.preventDefault();
+  const subject = document.getElementById('examSubject').value.trim();
+  const date = document.getElementById('examDate').value;
+  const target = parseFloat(document.getElementById('examTarget').value);
+  const rawTopics = document.getElementById('examTopics').value.trim();
+  const topics = rawTopics ? rawTopics.split(',').map(s => s.trim()).filter(Boolean).map(name => ({ name, done: false })) : [];
+
+  if(!subject || !date) return false;
+
+  state.exams.push({
+    id: uid(),
+    subject,
+    date: new Date(date).toISOString(),
+    targetScore: target,
+    achieved: null,
+    topics
+  });
+
+  saveExams();
+  document.getElementById('examForm').reset();
+  renderAll();
+  return false;
+}
+
+function toggleTopic(examId, idx){
+  const exam = state.exams.find(e => e.id === examId);
+  if(!exam) return;
+  exam.topics[idx].done = !exam.topics[idx].done;
+  saveExams();
+  renderExams();
+}
+
+function updateAchievedMark(examId, val){
+  const exam = state.exams.find(e => e.id === examId);
+  if(!exam) return;
+  const num = parseFloat(val);
+  exam.achieved = isNaN(num) ? null : num;
+  saveExams();
+  renderExams();
+  if(!document.getElementById('tab-performance').classList.contains('hidden')){
+    renderPerformance();
+  }
+}
+
+function deleteExam(id){
+  if(!confirm('Permanently remove this examination?')) return;
+  state.exams = state.exams.filter(e => e.id !== id);
+  saveExams();
+  renderAll();
+}
+
+function examDaysLeft(iso){
+  return Math.ceil((new Date(iso) - new Date()) / (24 * 3600 * 1000));
+}
+
+function renderExams(){
+  const list = document.getElementById('examList');
+  const sorted = [...state.exams].sort((a,b) => new Date(a.date) - new Date(b.date));
+  document.getElementById('badgeExamsCount').textContent = sorted.length;
+
+  if(sorted.length === 0){
+    list.innerHTML = `
+      <div class="text-center py-10 text-warm-800/50">
+        <i data-lucide="graduation-cap" class="w-9 h-9 mx-auto mb-2 opacity-30 text-sage-800"></i>
+        <p class="text-xs font-semibold">No upcoming exams registered.</p>
+      </div>`;
+  } else {
+    list.innerHTML = sorted.map(ex => {
+      const days = examDaysLeft(ex.date);
+      const isUrgent = days <= 7 && days >= 0;
+      const completedTopics = ex.topics.filter(t => t.done).length;
+      const progress = ex.topics.length ? Math.round((completedTopics / ex.topics.length) * 100) : 0;
+
+      return `
+      <div class="bg-white rounded-2xl p-4 border ${isUrgent ? 'border-terracotta-400/60 ring-1 ring-terracotta-400/20' : 'border-warm-200'} shadow-xs">
+        <div class="flex items-start justify-between gap-2">
+          <div>
+            <div class="flex items-center gap-2">
+              <h4 class="text-sm font-bold text-sage-900">${escapeHtml(ex.subject)}</h4>
+              ${isUrgent ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-terracotta-400/15 text-terracotta-500 gentle-pulse">Within 7 Days!</span>` : ''}
+            </div>
+            <p class="text-xs text-warm-800/60 mt-0.5">Date: ${fmtDate(ex.date)} • Target Score: <strong>${ex.targetScore}%</strong></p>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <span class="text-xs font-bold px-2.5 py-1 rounded-xl ${days <= 7 ? 'bg-terracotta-400/10 text-terracotta-500' : 'bg-warm-100 text-warm-800'}">
+              ${days === 0 ? 'Today!' : days > 0 ? days + 'd remaining' : 'Completed'}
+            </span>
+            <button onclick="deleteExam('${ex.id}')" class="p-1.5 rounded-lg hover:bg-warm-200 text-warm-800/50 hover:text-terracotta-500 transition">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+
+        ${ex.topics.length ? `
+          <div class="mt-3 pt-3 border-t border-warm-200/60">
+            <div class="flex items-center justify-between text-xs font-semibold mb-1.5">
+              <span class="text-warm-800/70">Syllabus Completion (${completedTopics}/${ex.topics.length})</span>
+              <span class="text-sage-700">${progress}%</span>
+            </div>
+            <div class="w-full h-2 bg-warm-100 rounded-full overflow-hidden mb-2.5">
+              <div class="h-full bg-sage-500 rounded-full transition-all duration-500" style="width: ${progress}%"></div>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              ${ex.topics.map((top, idx) => `
+                <button onclick="toggleTopic('${ex.id}', ${idx})" class="text-xs px-2.5 py-1 rounded-xl border transition flex items-center gap-1 ${top.done ? 'bg-sage-100 border-sage-300 text-sage-900 font-semibold' : 'bg-warm-50 border-warm-200 text-warm-800/70 hover:bg-warm-100'}">
+                  <i data-lucide="${top.done ? 'check-square' : 'square'}" class="w-3.5 h-3.5 ${top.done ? 'text-sage-700' : 'text-warm-800/40'}"></i>
+                  ${escapeHtml(top.name)}
+                </button>`).join('')}
+            </div>
+          </div>` : ''}
+
+        <div class="mt-3 pt-2.5 border-t border-warm-200/60 flex items-center gap-2">
+          <label class="text-xs text-warm-800/70 font-medium">Logged Result Score:</label>
+          <input type="number" min="0" max="100" placeholder="e.g., 88" value="${ex.achieved ?? ''}" 
+            onchange="updateAchievedMark('${ex.id}', this.value)"
+            class="w-20 bg-warm-100/80 border border-warm-300 focus:border-sage-500 outline-none rounded-lg px-2 py-1 text-xs text-center font-bold text-sage-900" />
+          <span class="text-xs text-warm-800/50">%</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Marks Table
+  const tbody = document.getElementById('marksTableBody');
+  const marks = [...state.exams].sort((a,b) => new Date(b.date) - new Date(a.date));
+  if(marks.length === 0){
+    tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-warm-800/40 text-xs">No exam evaluations recorded yet.</td></tr>`;
+  } else {
+    tbody.innerHTML = marks.map(ex => {
+      let evaluation = '<span class="text-warm-800/40">Awaiting Score</span>';
+      if(ex.achieved !== null && ex.achieved !== undefined){
+        const diff = ex.achieved - ex.targetScore;
+        evaluation = diff >= 0
+          ? `<span class="text-emerald-700 font-bold">Goal Achieved (+${diff.toFixed(1)}%)</span>`
+          : `<span class="text-terracotta-500 font-bold">Below Target (${diff.toFixed(1)}%)</span>`;
+      }
+      return `
+        <tr class="hover:bg-warm-100/40 transition">
+          <td class="py-2.5 pr-3 text-sage-900 font-bold">${escapeHtml(ex.subject)}</td>
+          <td class="py-2.5 pr-3 text-warm-800/70">${fmtDate(ex.date)}</td>
+          <td class="py-2.5 pr-3 text-warm-800/80 font-bold">${ex.targetScore}%</td>
+          <td class="py-2.5 pr-3 text-sage-900 font-bold">${ex.achieved !== null ? ex.achieved + '%' : '—'}</td>
+          <td class="py-2.5">${evaluation}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  lucide.createIcons();
+}
+
+/* ================= LAB CORNER ================= */
+function addLab(e){
+  e.preventDefault();
+  const name = document.getElementById('labName').value.trim();
+  const day = document.getElementById('labDay').value;
+  const time = document.getElementById('labTime').value;
+  const deadlineRaw = document.getElementById('labDeadline').value;
+  const progress = parseInt(document.getElementById('labProgress').value, 10) || 0;
+  const notes = document.getElementById('labNotes').value.trim();
+
+  if(!name) return false;
+
+  state.labs.push({
+    id: uid(),
+    name,
+    day,
+    time,
+    deadline: deadlineRaw ? new Date(deadlineRaw).toISOString() : null,
+    progress,
+    notes,
+    createdAt: new Date().toISOString()
+  });
+
+  saveLabs();
+  document.getElementById('labForm').reset();
+  document.getElementById('labProgressVal').textContent = '0%';
+  renderLabs();
+  return false;
+}
+
+function updateLabProgress(id, val){
+  const lab = state.labs.find(l => l.id === id);
+  if(!lab) return;
+  lab.progress = Math.max(0, Math.min(100, parseInt(val, 10) || 0));
+  saveLabs();
+  renderLabs();
+}
+
+function deleteLab(id){
+  if(!confirm('Remove this lab entry?')) return;
+  state.labs = state.labs.filter(l => l.id !== id);
+  saveLabs();
+  renderLabs();
+}
+
+function renderLabs(){
+  document.getElementById('badgeLabsCount').textContent = state.labs.length;
+  const list = document.getElementById('labList');
+  if(!list) return;
+
+  if(state.labs.length === 0){
+    list.innerHTML = `
+      <div class="text-center py-12 text-warm-800/50">
+        <i data-lucide="flask-conical" class="w-10 h-10 mx-auto mb-2.5 opacity-30 text-sage-800"></i>
+        <p class="text-sm font-medium">No labs logged yet.</p>
+        <p class="text-xs text-warm-800/40 mt-0.5">Add your first lab schedule to start tracking progress.</p>
+      </div>`;
+    lucide.createIcons();
+    return;
+  }
+
+  const sorted = [...state.labs].sort((a,b) => {
+    if(!a.deadline) return 1;
+    if(!b.deadline) return -1;
+    return new Date(a.deadline) - new Date(b.deadline);
+  });
+
+  list.innerHTML = sorted.map(l => {
+    const hasDeadline = !!l.deadline;
+    const hoursLeft = hasDeadline ? hoursUntil(l.deadline) : null;
+    const isUrgent = hasDeadline && hoursLeft > 0 && hoursLeft <= 48;
+    const isOverdue = hasDeadline && hoursLeft <= 0;
+    const barColor = l.progress >= 100 ? 'bg-emerald-500' : l.progress >= 50 ? 'bg-sage-500' : 'bg-terracotta-400';
+
+    return `
+    <div class="bg-white/80 rounded-2xl p-4 border ${isOverdue ? 'border-terracotta-400/60' : isUrgent ? 'border-amber-300' : 'border-warm-200/80'} transition-all hover:shadow-soft">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-start gap-3 min-w-0">
+          <div class="w-10 h-10 rounded-xl bg-sage-100/80 border border-sage-200 flex items-center justify-center shrink-0 mt-0.5">
+            <i data-lucide="flask-conical" class="w-5 h-5 text-sage-700"></i>
+          </div>
+          <div class="min-w-0">
+            <p class="text-sm font-bold text-sage-900 truncate">${escapeHtml(l.name)}</p>
+            <p class="text-xs text-warm-800/60 mt-1 flex items-center gap-1.5 flex-wrap">
+              <i data-lucide="calendar-days" class="w-3 h-3 text-sage-600"></i> ${l.day}${l.time ? ' • ' + l.time : ''}
+              ${hasDeadline ? `<span class="text-warm-800/30">•</span> <span class="font-semibold ${isOverdue ? 'text-terracotta-500' : 'text-sage-700'}">${isOverdue ? 'Overdue' : humanCountdown(l.deadline)}</span>` : ''}
+            </p>
+            ${l.notes ? `<p class="text-xs text-warm-800/50 mt-1.5 italic">${escapeHtml(l.notes)}</p>` : ''}
+          </div>
+        </div>
+        <button onclick="deleteLab('${l.id}')" title="Delete Lab" class="p-2 rounded-xl hover:bg-warm-200 text-warm-800/60 hover:text-terracotta-500 transition shrink-0">
+          <i data-lucide="trash-2" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div class="mt-3 pt-3 border-t border-warm-200/60">
+        <div class="flex items-center justify-between text-xs font-semibold mb-1.5">
+          <span class="text-warm-800/70">Progress</span>
+          <span class="text-sage-700">${l.progress}%</span>
+        </div>
+        <div class="w-full h-2 bg-warm-100 rounded-full overflow-hidden mb-2">
+          <div class="h-full ${barColor} rounded-full transition-all duration-500" style="width:${l.progress}%"></div>
+        </div>
+        <input type="range" min="0" max="100" step="5" value="${l.progress}" 
+          oninput="this.nextElementSibling.textContent = this.value + '%'; updateLabProgress('${l.id}', this.value)"
+          class="w-full h-1.5 bg-warm-300/80 rounded-lg appearance-none cursor-pointer accent-sage-600" />
+        <span class="hidden"></span>
+      </div>
+    </div>`;
+  }).join('');
+
+  lucide.createIcons();
+}
+
+/* ================= KNOWLEDGE GRAPH MAPPING ================= */
+const GRAPH_COURSE_COLORS = {
+  'Mathematics': '#527056',
+  'Physics': '#D06043',
+  'Engineering': '#8AA68E',
+  'Computer Science': '#3D382E',
+  'Chemistry': '#C7B99D',
+  'Other': '#ABC0AD'
+};
+
+function addGraphNode(e){
+  e.preventDefault();
+  const name = document.getElementById('graphNodeName').value.trim();
+  const course = document.getElementById('graphNodeCourse').value;
+  if(!name) return false;
+  state.graph.nodes.push({ id: uid(), name, course });
+  saveGraph();
+  document.getElementById('graphNodeName').value = '';
+  renderKnowledgeGraph();
+  return false;
+}
+
+function addGraphEdge(e){
+  e.preventDefault();
+  const from = document.getElementById('graphEdgeFrom').value;
+  const to = document.getElementById('graphEdgeTo').value;
+  const label = document.getElementById('graphEdgeLabel').value.trim();
+  if(!from || !to || from === to) return false;
+  const exists = state.graph.edges.some(ed => (ed.from === from && ed.to === to) || (ed.from === to && ed.to === from));
+  if(exists) { alert('These topics are already connected.'); return false; }
+  state.graph.edges.push({ id: uid(), from, to, label });
+  saveGraph();
+  document.getElementById('graphEdgeLabel').value = '';
+  renderKnowledgeGraph();
+  return false;
+}
+
+function deleteGraphNode(id){
+  state.graph.nodes = state.graph.nodes.filter(n => n.id !== id);
+  state.graph.edges = state.graph.edges.filter(ed => ed.from !== id && ed.to !== id);
+  saveGraph();
+  renderKnowledgeGraph();
+}
+
+function deleteGraphEdge(id){
+  state.graph.edges = state.graph.edges.filter(ed => ed.id !== id);
+  saveGraph();
+  renderKnowledgeGraph();
+}
+
+function renderKnowledgeGraph(){
+  const { nodes, edges } = state.graph;
+
+  // Populate edge-builder dropdowns
+  const fromSel = document.getElementById('graphEdgeFrom');
+  const toSel = document.getElementById('graphEdgeTo');
+  if(fromSel && toSel){
+    const options = nodes.map(n => `<option value="${n.id}">${escapeHtml(n.name)}</option>`).join('');
+    fromSel.innerHTML = options || '<option value="">Add topics first</option>';
+    toSel.innerHTML = options || '<option value="">Add topics first</option>';
+  }
+
+  document.getElementById('graphStats').textContent = `${nodes.length} topic${nodes.length === 1 ? '' : 's'} • ${edges.length} link${edges.length === 1 ? '' : 's'}`;
+
+  const svg = document.getElementById('graphSvg');
+  if(!svg) return;
+
+  if(nodes.length === 0){
+    svg.innerHTML = `<text x="320" y="260" text-anchor="middle" fill="#26231D66" font-size="13" font-family="sans-serif">Add topics to start mapping how your courses connect.</text>`;
+    return;
+  }
+
+  // Circular layout
+  const W = 640, H = 520, cx = W / 2, cy = H / 2, radius = Math.min(W, H) / 2 - 70;
+  const positions = {};
+  nodes.forEach((n, i) => {
+    const angle = (2 * Math.PI * i) / nodes.length - Math.PI / 2;
+    positions[n.id] = { x: cx + radius * Math.cos(angle), y: cy + radius * Math.sin(angle) };
+  });
+
+  let svgHtml = '';
+
+  // Edges (lines) drawn first so nodes sit on top
+  edges.forEach(ed => {
+    const a = positions[ed.from], b = positions[ed.to];
+    if(!a || !b) return;
+    const midX = (a.x + b.x) / 2, midY = (a.y + b.y) / 2;
+    svgHtml += `
+      <g class="graph-edge" style="cursor:pointer;" onclick="deleteGraphEdge('${ed.id}')">
+        <line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="#C7B99D" stroke-width="2" />
+        ${ed.label ? `<rect x="${midX - (ed.label.length * 3)}" y="${midY - 9}" width="${ed.label.length * 6}" height="16" fill="#FDFBF7" opacity="0.9" rx="4"/>
+        <text x="${midX}" y="${midY + 3}" text-anchor="middle" font-size="9" fill="#3D382E" font-family="sans-serif">${escapeHtml(ed.label)}</text>` : ''}
+      </g>`;
+  });
+
+  // Nodes (circles + labels)
+  nodes.forEach(n => {
+    const p = positions[n.id];
+    const color = GRAPH_COURSE_COLORS[n.course] || GRAPH_COURSE_COLORS.Other;
+    svgHtml += `
+      <g style="cursor:pointer;" onclick="deleteGraphNode('${n.id}')">
+        <circle cx="${p.x}" cy="${p.y}" r="30" fill="${color}" opacity="0.92" stroke="#FDFBF7" stroke-width="3"/>
+        <text x="${p.x}" y="${p.y + 4}" text-anchor="middle" font-size="9.5" font-weight="700" fill="#FDFBF7" font-family="sans-serif">${escapeHtml(n.name.length > 12 ? n.name.slice(0,11) + '…' : n.name)}</text>
+        <text x="${p.x}" y="${p.y + 44}" text-anchor="middle" font-size="9" fill="#3D382E99" font-family="sans-serif">${escapeHtml(n.course)}</text>
+      </g>`;
+  });
+
+  svg.innerHTML = svgHtml;
+}
+
+/* ================= PERFORMANCE TRACKER & CHARTS ================= */
+let perfChartInstance = null;
+
+function renderPerformance(){
+  const completed = state.tasks.filter(t => t.status === 'completed' && t.actualHours !== null);
+  const categories = ['Assignment', 'Lab', 'Quiz', 'Reading', 'Project'];
+  
+  const estHours = {};
+  const actHours = {};
+  categories.forEach(c => { estHours[c] = 0; actHours[c] = 0; });
+
+  completed.forEach(t => {
+    if(estHours[t.category] !== undefined){
+      estHours[t.category] += t.effort;
+      actHours[t.category] += t.actualHours;
+    }
+  });
+
+  const ctx = document.getElementById('perfChart').getContext('2d');
+  if(perfChartInstance) perfChartInstance.destroy();
+
+  perfChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: categories,
+      datasets: [
+        {
+          label: 'Estimated (Planned)',
+          data: categories.map(c => +estHours[c].toFixed(2)),
+          backgroundColor: '#8AA68E',
+          borderRadius: 8,
+        },
+        {
+          label: 'Actual (Logged)',
+          data: categories.map(c => +actHours[c].toFixed(2)),
+          backgroundColor: '#E07A5F',
+          borderRadius: 8,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {
+            boxWidth: 12,
+            font: { family: '"Plus Jakarta Sans"', size: 11, weight: 600 },
+            color: '#2E3E31'
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { family: '"Plus Jakarta Sans"', size: 11 }, color: '#527056' }
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: 'rgba(203, 215, 204, 0.4)' },
+          ticks: { font: { family: '"Plus Jakarta Sans"', size: 10 }, color: '#527056' }
+        }
+      }
+    }
+  });
+
+  // Diagnostics card
+  let worstCat = null;
+  let maxDiscrepancy = -Infinity;
+  categories.forEach(c => {
+    if(estHours[c] > 0){
+      const diff = (actHours[c] - estHours[c]) / estHours[c] * 100;
+      if(diff > maxDiscrepancy){
+        maxDiscrepancy = diff;
+        worstCat = c;
+      }
+    }
+  });
+
+  const insight = document.getElementById('insightCard');
+  if(worstCat && maxDiscrepancy > 10){
+    insight.innerHTML = `
+      <p>💡 <strong>Time Leak Detected:</strong> You consistently underestimate <strong>${worstCat}</strong> tasks by approx. <span class="text-terracotta-500 font-bold">${maxDiscrepancy.toFixed(0)}%</span> (e.g., spending 3-4 hours on tasks planned for 2 hours).</p>
+      <p class="mt-2 text-xs text-warm-800/70"><strong>Recommended Adjustment:</strong> Add a mandatory <strong>+30 minute buffer</strong> for all upcoming ${worstCat.toLowerCase()} entries in your dashboard to avoid pushing subsequent deadlines.</p>`;
+  } else if(worstCat && maxDiscrepancy < -10){
+    insight.innerHTML = `
+      <p>🎯 <strong>Overestimation Trend:</strong> You tend to finish <strong>${worstCat}</strong> tasks <span class="text-emerald-700 font-bold">${Math.abs(maxDiscrepancy).toFixed(0)}% faster</span> than expected. You can safely budget tighter blocks and reclaim free recreation hours.</p>`;
+  } else if(completed.length === 0){
+    insight.innerHTML = `
+      <p class="text-warm-800/70">Complete tasks and record your actual hours spent to unlock machine-learned calibration insights.</p>`;
+  } else {
+    insight.innerHTML = `
+      <p class="text-sage-900 font-medium">✨ <strong>Excellent Calibration:</strong> Your planned estimates align very closely with actual logged hours across all subjects.</p>`;
+  }
+
+  // KPIs
+  const total = state.tasks.length;
+  const done = state.tasks.filter(t => t.status === 'completed').length;
+  const rate = total ? Math.round((done / total) * 100) : 0;
+  document.getElementById('completionRateStat').textContent = `${rate}%`;
+  document.getElementById('completionRateSub').textContent = `${done} of ${total} tasks completed`;
+
+  const weekAgo = Date.now() - 7 * 24 * 3600 * 1000;
+  const weeklyHours = state.tasks
+    .filter(t => t.status === 'completed' && t.completedAt && new Date(t.completedAt).getTime() >= weekAgo)
+    .reduce((sum, t) => sum + (t.actualHours || 0), 0);
+  document.getElementById('weeklyStat').textContent = `${weeklyHours.toFixed(1)} hrs`;
+}
+
+/* ================= DEMO DATA GENERATOR ================= */
+function loadDemoData(){
+  const now = Date.now();
+  const h = 3600 * 1000;
+
+  state.tasks = [
+    { id: uid(), name: 'Thermodynamics Problem Set 4', category: 'Assignment', priority: 'High', effort: 3.0, deadline: new Date(now + 9 * h).toISOString(), status: 'pending', actualHours: null, createdAt: new Date().toISOString() },
+    { id: uid(), name: 'Data Structures Lab Experiment 5', category: 'Lab', priority: 'High', effort: 2.5, deadline: new Date(now + 22 * h).toISOString(), status: 'pending', actualHours: null, createdAt: new Date().toISOString() },
+    { id: uid(), name: 'Applied Calculus Quiz Prep', category: 'Quiz', priority: 'Medium', effort: 1.5, deadline: new Date(now + 32 * h).toISOString(), status: 'pending', actualHours: null, createdAt: new Date().toISOString() },
+    { id: uid(), name: 'Technical Writing Seminar Article', category: 'Reading', priority: 'Low', effort: 2.0, deadline: new Date(now + 60 * h).toISOString(), status: 'pending', actualHours: null, createdAt: new Date().toISOString() },
+    { id: uid(), name: 'Software Engineering Term Project Spec', category: 'Project', priority: 'High', effort: 4.0, deadline: new Date(now + 80 * h).toISOString(), status: 'pending', actualHours: null, createdAt: new Date().toISOString() },
+    { id: uid(), name: 'Physics Mechanics Assignment 2', category: 'Assignment', priority: 'High', effort: 2.0, deadline: new Date(now - 6 * h).toISOString(), status: 'completed', actualHours: 3.5, createdAt: new Date(now - 48 * h).toISOString(), completedAt: new Date(now - 5 * h).toISOString() },
+    { id: uid(), name: 'Chemistry Qualitative Analysis Quiz', category: 'Quiz', priority: 'Medium', effort: 1.0, deadline: new Date(now - 12 * h).toISOString(), status: 'completed', actualHours: 1.2, createdAt: new Date(now - 36 * h).toISOString(), completedAt: new Date(now - 10 * h).toISOString() },
+  ];
+
+  state.exams = [
+    {
+      id: uid(),
+      subject: 'Engineering Mathematics II',
+      date: new Date(now + 4 * 24 * h).toISOString(),
+      targetScore: 90,
+      achieved: null,
+      topics: [
+        { name: 'Differential Equations', done: true },
+        { name: 'Laplace Transforms', done: true },
+        { name: 'Fourier Series', done: false },
+        { name: 'Vector Calculus', done: false }
+      ]
+    },
+    {
+      id: uid(),
+      subject: 'Data Structures & Algorithms',
+      date: new Date(now + 12 * 24 * h).toISOString(),
+      targetScore: 85,
+      achieved: null,
+      topics: [
+        { name: 'AVL Trees', done: true },
+        { name: 'Graph Traversal', done: false },
+        { name: 'Dynamic Programming', done: false }
+      ]
+    },
+    {
+      id: uid(),
+      subject: 'Environmental Sciences Mid-Term',
+      date: new Date(now - 15 * 24 * h).toISOString(),
+      targetScore: 80,
+      achieved: 84,
+      topics: [
+        { name: 'Ecosystem Dynamics', done: true },
+        { name: 'Pollution Control', done: true }
+      ]
+    }
+  ];
+
+  state.availableHours = 4.0;
+  document.getElementById('availableHoursInput').value = 4.0;
+  document.getElementById('sidebarHoursDisplay').textContent = '4.0 hrs';
+
+  // Seed a chronotype and a week of plausible focus history so the
+  // Focus Lab tab has something to show immediately.
+  state.chronotype = { type: 'early', peakStart: 6, peakEnd: 11 };
+  state.zenSessions = 9;
+  state.focusLog = [];
+  for(let day = 0; day < 7; day++){
+    const morningHits = 2 + Math.floor(Math.random() * 4);
+    for(let i = 0; i < morningHits; i++){
+      state.focusLog.push({ day, hour: 7 + Math.floor(Math.random() * 4), type: 'pomodoro' });
+    }
+    if(Math.random() > 0.4){
+      state.focusLog.push({ day, hour: 20 + Math.floor(Math.random() * 3), type: 'task' });
+    }
+    if(Math.random() > 0.6){
+      state.focusLog.push({ day, hour: 14, type: 'task' });
+    }
+  }
+
+  state.labs = [
+    { id: uid(), name: 'Data Structures Lab', day: 'Tuesday', time: '10:00', deadline: new Date(now + 30 * h).toISOString(), progress: 60, notes: 'Experiment 5 — graph traversal write-up pending.', createdAt: new Date().toISOString() },
+    { id: uid(), name: 'Physics Mechanics Lab', day: 'Thursday', time: '14:00', deadline: new Date(now + 3 * 24 * h).toISOString(), progress: 25, notes: 'Pendulum experiment — need to redo trial 3 readings.', createdAt: new Date().toISOString() },
+    { id: uid(), name: 'Chemistry Analysis Lab', day: 'Monday', time: '09:00', deadline: new Date(now - 2 * h).toISOString(), progress: 100, notes: 'Report submitted.', createdAt: new Date().toISOString() }
+  ];
+
+  state.graph = {
+    nodes: [
+      { id: 'gn1', name: 'Calculus', course: 'Mathematics' },
+      { id: 'gn2', name: 'Vectors', course: 'Mathematics' },
+      { id: 'gn3', name: 'Classical Mechanics', course: 'Physics' },
+      { id: 'gn4', name: 'Circuits', course: 'Physics' },
+      { id: 'gn5', name: 'Structural Design', course: 'Engineering' },
+      { id: 'gn6', name: 'Data Structures', course: 'Computer Science' }
+    ],
+    edges: [
+      { id: 'ge1', from: 'gn1', to: 'gn3', label: 'is used in' },
+      { id: 'ge2', from: 'gn2', to: 'gn3', label: 'underlies' },
+      { id: 'ge3', from: 'gn3', to: 'gn5', label: 'applies to' },
+      { id: 'ge4', from: 'gn1', to: 'gn4', label: 'models' },
+      { id: 'ge5', from: 'gn2', to: 'gn6', label: 'informs' }
+    ]
+  };
+
+  state.rewardsUnlocked = 0;
+
+  saveTasks(); saveExams(); saveHours(); saveChronotype(); saveFocusLog(); saveZenSessions();
+  saveLabs(); saveGraph(); saveRewards();
+  renderAll();
+  renderSchedule();
+  renderPerformance();
+  if(!document.getElementById('tab-focus').classList.contains('hidden')) renderFocusLab();
+  renderLabs();
+  if(!document.getElementById('tab-graph').classList.contains('hidden')) renderKnowledgeGraph();
+}
+
+function resetAllData(){
+  if(!confirm('This will wipe all data and reset to a clean state. Continue?')) return;
+  localStorage.removeItem('synapse_tasks');
+  localStorage.removeItem('synapse_exams');
+  localStorage.removeItem('synapse_hours');
+  localStorage.removeItem('synapse_chronotype');
+  localStorage.removeItem('synapse_focuslog');
+  localStorage.removeItem('synapse_zensessions');
+  localStorage.removeItem('synapse_labs');
+  localStorage.removeItem('synapse_graph');
+  localStorage.removeItem('synapse_rewards');
+  localStorage.removeItem('synapse_timerprefs');
+  state = { tasks: [], exams: [], availableHours: 4, chronotype: { type: 'early', peakStart: 6, peakEnd: 11 }, focusLog: [], zenSessions: 0, labs: [], graph: { nodes: [], edges: [] }, rewardsUnlocked: 0, timerPrefs: { focusMin: 25, breakMin: 5 } };
+  document.getElementById('availableHoursInput').value = 4;
+  document.getElementById('sidebarHoursDisplay').textContent = '4.0 hrs';
+  document.getElementById('focusMinInput').value = 25;
+  document.getElementById('breakMinInput').value = 5;
+  resetTimer();
+  renderAll();
+  renderSchedule();
+  renderPerformance();
+  renderLabs();
+  if(!document.getElementById('tab-focus').classList.contains('hidden')) renderFocusLab();
+  if(!document.getElementById('tab-graph').classList.contains('hidden')) renderKnowledgeGraph();
+}
+
+/* ================= INITIALIZATION ================= */
+function renderAll(){
+  renderStatStrip();
+  renderTicker();
+  renderTaskList();
+  renderExams();
+  document.getElementById('badgeLabsCount').textContent = state.labs.length;
+}
+
+// Available study hours slider listener
+const hoursSlider = document.getElementById('availableHoursInput');
+hoursSlider.addEventListener('input', (e) => {
+  const val = parseFloat(e.target.value);
+  state.availableHours = val;
+  document.getElementById('sidebarHoursDisplay').textContent = val.toFixed(1) + ' hrs';
+  saveHours();
+  renderStatStrip();
+  if(!document.getElementById('tab-schedule').classList.contains('hidden')){
+    renderSchedule();
+  }
+});
+
+// Update Live Clock & Date
+function updateClock(){
+  const now = new Date();
+  document.getElementById('liveClock').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  document.getElementById('liveDateStr').textContent = now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+// Set default task deadline to +24 hours
+(function initDefaultTimestamps(){
+  const d = new Date(Date.now() + 24 * 3600 * 1000);
+  d.setMinutes(0,0,0);
+  const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  const taskDeadline = document.getElementById('taskDeadline');
+  if(taskDeadline) taskDeadline.value = iso;
+
+  const examDate = document.getElementById('examDate');
+  if(examDate){
+    const d2 = new Date(Date.now() + 6 * 24 * 3600 * 1000);
+    examDate.value = d2.toISOString().slice(0, 10);
+  }
+})();
+
+loadState();
+document.getElementById('availableHoursInput').value = state.availableHours;
+document.getElementById('sidebarHoursDisplay').textContent = state.availableHours.toFixed(1) + ' hrs';
+document.getElementById('focusMinInput').value = state.timerPrefs.focusMin;
+document.getElementById('breakMinInput').value = state.timerPrefs.breakMin;
+renderAll();
+renderChronoUI();
+renderLabs();
+switchTab('dashboard');
+resetTimer();
+updateClock();
+setInterval(updateClock, 1000);
+setInterval(renderTicker, 30000);
+lucide.createIcons();
+</script>
+</body>
+</html>
